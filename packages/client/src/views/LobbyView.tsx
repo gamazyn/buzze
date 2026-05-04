@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { socket } from '../socket.js';
@@ -17,12 +17,22 @@ export function LobbyView() {
     }
   }, [phase]);
 
+  // Tunnel tem prioridade: jogadores remotos são o caso principal
+  const joinUrl = tunnelUrl ?? localUrl;
+  const [copied, setCopied] = useState(false);
+
   function handleStart() {
     if (!sessionId || !hostToken) return;
     socket.emit('host:start', { sessionId, hostToken });
   }
 
-  const joinUrl = localUrl ?? tunnelUrl;
+  function handleCopyLink() {
+    if (!joinUrl || !sessionId) return;
+    navigator.clipboard.writeText(`${joinUrl}/join/${sessionId}`).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -56,7 +66,7 @@ export function LobbyView() {
         </div>
 
         {/* QR code */}
-        {sessionId && joinUrl && (
+        {sessionId && (localUrl || tunnelUrl) && (
           <div
             className="rounded-2xl p-5 flex flex-col items-center gap-3"
             style={{
@@ -65,27 +75,58 @@ export function LobbyView() {
               boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
             }}
           >
-            <div
-              className="bg-white rounded-xl p-3"
-              style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
-            >
-              <QRCodeSVG
-                value={`${joinUrl}/join/${sessionId}`}
-                size={148}
-                bgColor="#ffffff"
-                fgColor="#1e3a5f"
-              />
-            </div>
-            <p className="text-slate-500 font-ui text-xs">Mesma rede Wi-Fi</p>
-            {tunnelUrl && (
-              <button
-                className="font-ui text-sm transition-colors"
-                style={{ color: '#E8B84B' }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#F0C45A')}
-                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = '#E8B84B')}
-                onClick={() => navigator.clipboard.writeText(`${tunnelUrl}/join/${sessionId}`)}
+            {joinUrl ? (
+              <div
+                className="bg-white rounded-xl p-3"
+                style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
               >
-                Copiar link remoto ↗
+                <QRCodeSVG
+                  value={`${joinUrl}/join/${sessionId}`}
+                  size={148}
+                  bgColor="#ffffff"
+                  fgColor="#1e3a5f"
+                />
+              </div>
+            ) : null}
+
+            {/* Status do tunnel */}
+            {tunnelUrl ? (
+              <p className="text-slate-500 font-ui text-xs">🌐 Acesso remoto (internet)</p>
+            ) : (
+              <p className="text-slate-500 font-ui text-xs flex items-center gap-1">
+                <span
+                  className="inline-block w-2 h-2 rounded-full"
+                  style={{ background: '#E8B84B', animation: 'pulse 1.5s ease-in-out infinite' }}
+                />
+                Conectando tunnel...
+              </p>
+            )}
+
+            {/* Botão copiar — tunnel quando disponível, Wi-Fi como fallback */}
+            <button
+              className="font-ui text-sm transition-colors"
+              style={{ color: copied ? '#4ade80' : '#E8B84B' }}
+              onMouseEnter={(e) => { if (!copied) (e.currentTarget as HTMLElement).style.color = '#F0C45A' }}
+              onMouseLeave={(e) => { if (!copied) (e.currentTarget as HTMLElement).style.color = '#E8B84B' }}
+              onClick={handleCopyLink}
+            >
+              {copied
+                ? '✓ Link copiado!'
+                : tunnelUrl
+                  ? 'Copiar link remoto ↗'
+                  : 'Copiar link Wi-Fi ↗'}
+            </button>
+
+            {/* Link Wi-Fi local como fallback visível quando tunnel ativo */}
+            {tunnelUrl && localUrl && (
+              <button
+                className="font-ui text-xs transition-colors"
+                style={{ color: '#475569' }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#64748b')}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = '#475569')}
+                onClick={() => navigator.clipboard.writeText(`${localUrl}/join/${sessionId}`)}
+              >
+                Copiar link Wi-Fi (mesma rede)
               </button>
             )}
           </div>
