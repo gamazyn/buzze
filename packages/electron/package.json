@@ -6,7 +6,7 @@
   "main": "dist/main.js",
   "scripts": {
     "dev": "electron .",
-    "build:bundle": "esbuild ../server/dist/server.js --bundle --platform=node --format=esm --outfile=resources/server-bundle.mjs --external:fsevents --external:bufferutil --external:utf-8-validate --external:canvas",
+    "build:bundle": "node esbuild.config.mjs",
     "build:tsc": "tsc",
     "build": "pnpm build:bundle && pnpm build:tsc",
     "pack": "electron-builder --dir",
