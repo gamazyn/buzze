@@ -6,6 +6,7 @@ publish:
   provider: github
   owner: gamazyn
   repo: responde-ai
+  releaseType: release
 
 artifactName: "responde-ai-${version}-${arch}.${ext}"
 
