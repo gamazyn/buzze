@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { socket } from '../socket.js';
 import { useGameStore } from '../store/gameStore.js';
 import { usePlayerStore } from '../store/playerStore.js';
+import { BuzzeLogo } from '../components/ui/BuzzeLogo.js';
 
 export function JoinView() {
+  const { t } = useTranslation();
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const { setSession, reset: resetGame } = useGameStore();
@@ -47,37 +50,37 @@ export function JoinView() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 gap-8">
-      <div className="text-center">
-        <h1 className="text-5xl font-bold text-jeopardy-gold tracking-wider mb-2">Responde Aí!</h1>
-        <p className="text-slate-400 text-sm">Sala</p>
-        <p className="text-3xl font-bold tracking-widest mt-1">{sessionId?.toUpperCase()}</p>
+      <div className="text-center flex flex-col items-center gap-3">
+        <BuzzeLogo size={36} />
+        <p className="text-buzze-fg-dim font-body text-sm">{ t('join.room') }</p>
+        <p className="text-3xl font-mono font-bold tracking-widest text-buzze-fuchsia">{sessionId?.toUpperCase()}</p>
       </div>
 
       <div className="card w-full max-w-sm">
-        <h2 className="text-xl font-bold text-jeopardy-gold mb-4">Entrar na sala</h2>
+        <h2 className="font-display text-xl text-buzze-fuchsia mb-4">{ t('join.enter_room') }</h2>
         <form onSubmit={handleJoin} className="flex flex-col gap-3">
           <input
             type="text"
-            placeholder="Seu nome"
+            placeholder={t('join.your_name')}
             value={myName}
             onChange={(e) => setMyName(e.target.value)}
             maxLength={30}
             autoFocus
-            className="bg-jeopardy-blue border-2 border-slate-500 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-jeopardy-gold"
+            className="editor-input"
           />
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+          {error && <p className="text-buzze-danger text-sm font-body">{error}</p>}
           <button
             type="submit"
             className="btn-primary"
             disabled={isJoining || !myName.trim()}
           >
-            {isJoining ? 'Entrando...' : 'Entrar'}
+            {isJoining ? t('join.joining') : t('join.join')}
           </button>
         </form>
       </div>
 
       <button className="btn-ghost text-sm" onClick={() => navigate('/')}>
-        ← Voltar ao menu
+        {t('join.back')}
       </button>
     </div>
   );

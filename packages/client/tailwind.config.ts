@@ -5,19 +5,31 @@ export default {
   theme: {
     extend: {
       colors: {
-        jeopardy: {
-          blue: '#0F172A',
-          'blue-light': '#1E2D40',
-          gold: '#E8B84B',
-          'gold-dark': '#C59830',
+        buzze: {
+          bg:       '#07060f',
+          panel:    '#0d0b18',
+          raised:   '#15122a',
+          hover:    '#1e1a38',
+          fg:       '#f0ecff',
+          'fg-sub': '#b8b0d8',
+          'fg-dim': '#6b6390',
+          'fg-dis': '#3a3558',
+          violet:   '#7c3aed',
+          fuchsia:  '#c084fc',
+          pink:     '#f0abfc',
+          success:  '#3ee67a',
+          danger:   '#ff4d6d',
+          warn:     '#ffc857',
         },
       },
       fontFamily: {
-        display: ['Georgia', 'Times New Roman', 'serif'],
-        ui: ['Lato', 'system-ui', 'sans-serif'],
-        value: ['Oswald', 'Georgia', 'serif'],
-        arcade: ['Bungee', 'Georgia', 'serif'],
-        mono: ['Space Mono', 'monospace'],
+        display: ['Syne', 'system-ui', 'sans-serif'],
+        body:    ['DM Sans', 'system-ui', 'sans-serif'],
+        mono:    ['JetBrains Mono', 'ui-monospace', 'monospace'],
+        // aliases temporários para migração gradual
+        arcade:  ['Syne', 'system-ui', 'sans-serif'],
+        ui:      ['DM Sans', 'system-ui', 'sans-serif'],
+        value:   ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
       animation: {
         'flip-in': 'flipIn 0.6s ease-in-out',
@@ -37,16 +49,16 @@ export default {
           '100%': { transform: 'scale(1)' },
         },
         buzzerPulse: {
-          '0%, 100%': { boxShadow: '0 0 0 0 rgba(239, 68, 68, 0.5), 0 6px 0 #7f1d1d' },
-          '50%': { boxShadow: '0 0 0 20px rgba(239, 68, 68, 0), 0 6px 0 #7f1d1d' },
+          '0%, 100%': { boxShadow: '0 0 0 0 rgba(124, 58, 237, 0.6), 0 10px 0 #3b0764' },
+          '50%': { boxShadow: '0 0 0 20px rgba(124, 58, 237, 0), 0 10px 0 #3b0764' },
         },
         glowBreathe: {
           '0%, 100%': { opacity: '0.6', transform: 'scale(1)' },
           '50%': { opacity: '1', transform: 'scale(1.03)' },
         },
         winnerShimmer: {
-          '0%, 100%': { boxShadow: '0 0 12px rgba(232,184,75,0.4)' },
-          '50%': { boxShadow: '0 0 28px rgba(232,184,75,0.9)' },
+          '0%, 100%': { boxShadow: '0 0 12px rgba(62,230,122,0.4)' },
+          '50%': { boxShadow: '0 0 28px rgba(62,230,122,0.9)' },
         },
       },
     },

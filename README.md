@@ -1,6 +1,6 @@
-# Responde Aí!
+# buzze.io
 
-Quiz show customizável para jogar online com seus amigos. O host controla o board numa tela grande enquanto os jogadores se conectam pelo celular ou PC para apertar o buzzer.
+Quiz show ao vivo para jogar online com seus amigos. O host controla o board numa tela grande enquanto os jogadores se conectam pelo celular ou PC para apertar o buzzer.
 
 ## Funcionalidades
 
@@ -12,6 +12,7 @@ Quiz show customizável para jogar online com seus amigos. O host controla o boa
 - **Mídia** — imagens e áudio nas questões e categorias
 - **QR Code** — jogadores escaneiam e entram direto na sala, sem digitar código
 - **Acesso remoto** — tunnel automático via localtunnel, sem configuração
+- **Multilíngue** — PT-BR, EN e ES com detecção automática de idioma
 
 ## Requisitos
 
@@ -21,8 +22,8 @@ Quiz show customizável para jogar online com seus amigos. O host controla o boa
 ## Instalação
 
 ```bash
-git clone https://github.com/gamazyn/responde-ai
-cd responde-ai
+git clone https://github.com/gamazyn/buzze
+cd buzze
 pnpm install
 ```
 
@@ -34,7 +35,7 @@ Para testar rapidamente sem criar um jogo do zero:
 pnpm seed
 ```
 
-Isso importa o **Jogo de Teste** da pasta `samples/` para `data/games/`. O jogo contém 5 categorias (Geografia, Ciência, Cultura Pop, História, Esportes) com 5 questões cada, incluindo questões especiais como *Todos Jogam* e *Desafie um Jogador*.
+Isso importa o **Jogo de Teste** da pasta `samples/` para `data/games/`. O jogo contém 5 categorias com 5 questões cada, incluindo questões especiais como *Todos Jogam* e *Desafie um Jogador*.
 
 ## Rodando em desenvolvimento
 
@@ -50,14 +51,14 @@ Acesse **http://localhost:5173** no browser.
 
 ### 1. Criar um jogo
 
-1. Abra o app e clique em **Editor de Jogos**
+1. Abra o app e clique em **Editor de Quizzes**
 2. Adicione categorias e preencha as questões
 3. Configure o Desafio Final (opcional)
 4. Clique em **Salvar**
 
 ### 2. Hospedar uma sala
 
-1. Na tela inicial, clique em **Hospedar Jogo**
+1. Na tela inicial, clique em **Criar Sala**
 2. Selecione o jogo criado e clique em **Criar Sala**
 3. Compartilhe o **QR Code** (mesma rede) ou o **link remoto** com seus amigos
 4. Quando todos entrarem, clique em **Iniciar Jogo**
@@ -79,11 +80,12 @@ Acesse **http://localhost:5173** no browser.
 ## Estrutura do Projeto
 
 ```
-responde-ai/
+buzze/
 ├── packages/
 │   ├── shared/     # Tipos TypeScript e utilitários compartilhados
 │   ├── server/     # Backend Node.js + Express + Socket.io
-│   └── client/     # Frontend React + Vite + Tailwind
+│   ├── client/     # Frontend React + Vite + Tailwind
+│   └── electron/   # Desktop app (Electron)
 ```
 
 ## Stack
@@ -92,6 +94,8 @@ responde-ai/
 |---|---|
 | Frontend | React 18 + TypeScript + Vite + Tailwind + Framer Motion |
 | Backend | Node.js + Express + Socket.io |
+| Desktop | Electron |
+| i18n | react-i18next |
 | Monorepo | pnpm workspaces + Turborepo |
 | Tunnel | localtunnel |
 
@@ -103,6 +107,8 @@ responde-ai/
 | `pnpm build` | Build de produção |
 | `pnpm type-check` | Checa tipos em todos os packages |
 | `pnpm seed` | Importa os jogos de exemplo de `samples/` para `data/` |
+| `pnpm electron:dev` | Inicia o app Electron em modo dev |
+| `pnpm electron:dist` | Gera o instalador do app desktop |
 
 ## Licença
 

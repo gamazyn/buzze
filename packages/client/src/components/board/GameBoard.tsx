@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import type { Category } from '@responde-ai/shared';
+import type { Category } from '@buzze/shared';
 
 interface Props {
   categories: Category[];
@@ -23,18 +23,19 @@ export function GameBoard({ categories, gameId, onSelectQuestion, activeQuestion
       {categories.map((cat) => (
         <div
           key={cat.id}
-          className={`border-4 border-slate-800 flex items-center justify-center text-center p-1 md:p-3 overflow-hidden ${fillHeight ? '' : 'min-h-[80px]'}`}
+          className={`flex items-center justify-center text-center p-1 md:p-3 overflow-hidden ${fillHeight ? '' : 'min-h-[80px]'}`}
           style={{
-            background: 'linear-gradient(180deg, #1e3a5f 0%, #0d1f33 100%)',
-            boxShadow: 'inset 0 2px 0 rgba(255,255,255,0.08), inset 0 -3px 0 rgba(0,0,0,0.5)',
+            background: 'linear-gradient(180deg, #15122a 0%, #0d0b18 100%)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -2px 0 rgba(0,0,0,0.5)',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
           }}
         >
           {cat.media ? (
             <img src={`/media/${gameId}/${cat.media.filename}`} alt={cat.name} className="max-h-16 object-contain" />
           ) : (
             <span
-              className="font-arcade text-white uppercase text-xs md:text-sm leading-tight tracking-widest"
-              style={{ textShadow: '0 1px 8px rgba(0,0,0,0.9), 0 0 20px rgba(255,255,255,0.1)' }}
+              className="font-display text-buzze-fg-sub uppercase text-xs md:text-sm leading-tight tracking-widest"
+              style={{ textShadow: '0 1px 8px rgba(0,0,0,0.9)' }}
             >
               {cat.name}
             </span>
@@ -57,7 +58,7 @@ export function GameBoard({ categories, gameId, onSelectQuestion, activeQuestion
                 whileHover={!q.used ? { scale: 1.03 } : {}}
                 whileTap={!q.used ? { scale: 0.97 } : {}}
                 className={`question-cell ${fillHeight ? '' : 'aspect-[4/3]'} ${q.used ? 'used' : ''} ${
-                  isActive ? 'ring-4 ring-jeopardy-gold' : ''
+                  isActive ? 'ring-2 ring-buzze-violet' : ''
                 }`}
                 onClick={() => {
                   if (!q.used && onSelectQuestion) {

@@ -1,13 +1,13 @@
-appId: com.gamazyn.responde-ai
-productName: "Responde Aí!"
+appId: com.gamazyn.buzze
+productName: "buzze.io"
 copyright: "Copyright © 2025 gamazyn"
 
 publish:
   provider: github
   owner: gamazyn
-  repo: responde-ai
+  repo: buzze
 
-artifactName: "responde-ai-${version}-${arch}.${ext}"
+artifactName: "buzze-${version}-${arch}.${ext}"
 
 directories:
   output: dist-electron

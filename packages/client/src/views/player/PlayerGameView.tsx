@@ -8,8 +8,11 @@ import { useSocketEvents } from '../../hooks/useSocketEvents.js';
 import { GameBoard } from '../../components/board/GameBoard.js';
 import { Scoreboard } from '../../components/scores/Scoreboard.js';
 import { QuestionTimer } from '../../components/question/QuestionTimer.js';
+import { BuzzeLogo } from '../../components/ui/BuzzeLogo.js';
+import { useTranslation } from 'react-i18next';
 
 export function PlayerGameView() {
+  const { t } = useTranslation();
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const {
@@ -104,23 +107,23 @@ export function PlayerGameView() {
   if (!gameConfig) {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center p-6 gap-6 overflow-y-auto">
-        <h1 className="text-5xl font-bold text-jeopardy-gold tracking-wider">Responde Aí!</h1>
+        <BuzzeLogo size={36} />
         <div className="card text-center max-w-sm w-full">
           <div className="text-4xl mb-4">⏳</div>
           <p className="text-lg font-bold mb-1">{myName}</p>
-          <p className="text-slate-400 text-sm">Aguardando o host iniciar o quiz...</p>
+          <p className="text-slate-400 text-sm">{ t('player.waiting_host') }</p>
         </div>
         {players.length > 0 && (
           <div className="card max-w-sm w-full">
-            <h3 className="text-jeopardy-gold font-bold text-sm uppercase tracking-wider mb-3">
-              Jogadores na sala ({players.length})
+            <h3 className="text-buzze-fuchsia font-bold text-sm uppercase tracking-wider mb-3">
+              {t('player.players_in_room', { count: players.length })}
             </h3>
             <ul className="flex flex-col gap-2">
               {players.map((p) => (
                 <li key={p.id} className="flex items-center gap-3">
                   <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: p.avatarColor }} />
                   <span className="text-sm">{p.name}</span>
-                  {p.id === myId && <span className="text-jeopardy-gold text-xs ml-auto">você</span>}
+                  {p.id === myId && <span className="text-buzze-fuchsia text-xs ml-auto">{t('player.you')}</span>}
                 </li>
               ))}
             </ul>
@@ -138,10 +141,10 @@ export function PlayerGameView() {
       {/* Header com meu score */}
       <div className="flex items-center justify-between flex-shrink-0">
         <div>
-          <div className="text-slate-400 text-xs font-ui">{myName}</div>
+          <div className="text-slate-400 text-xs font-body">{myName}</div>
           <div
-            className={`text-2xl font-mono font-bold ${(myPlayer?.score ?? 0) < 0 ? 'text-red-400' : 'text-jeopardy-gold'}`}
-            style={(myPlayer?.score ?? 0) >= 0 ? { textShadow: '0 0 16px rgba(232,184,75,0.5)' } : undefined}
+            className={`text-2xl font-mono font-bold ${(myPlayer?.score ?? 0) < 0 ? 'text-red-400' : 'text-buzze-fuchsia'}`}
+            style={(myPlayer?.score ?? 0) >= 0 ? { textShadow: '0 0 16px rgba(192,132,252,0.5)' } : undefined}
           >
             ${(myPlayer?.score ?? 0).toLocaleString('pt-BR')}
           </div>
@@ -176,10 +179,10 @@ export function PlayerGameView() {
 
       {/* Dupla Aposta */}
       {phase === 'double_wager' && activeQuestion && (
-        <div className="fixed inset-0 bg-jeopardy-blue flex flex-col items-center justify-center p-4 md:p-6 z-50 gap-4 md:gap-6 overflow-y-auto">
+        <div className="fixed inset-0 bg-buzze-bg flex flex-col items-center justify-center p-4 md:p-6 z-50 gap-4 md:gap-6 overflow-y-auto">
           <div className="text-5xl md:text-6xl">🎯</div>
-          <h2 className="text-3xl md:text-4xl font-bold text-jeopardy-gold">DUPLA APOSTA!</h2>
-          <p className="text-jeopardy-gold text-xl">${activeQuestion.question.value}</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-buzze-fuchsia">DUPLA APOSTA!</h2>
+          <p className="text-buzze-fuchsia text-xl">${activeQuestion.question.value}</p>
 
           {doublePlayerId === myId ? (
             // Sou o jogador atribuído
@@ -192,7 +195,7 @@ export function PlayerGameView() {
                   max={Math.max(myPlayer?.score ?? 0, activeQuestion.question.value)}
                   value={doubleWagerInput}
                   onChange={(e) => setDoubleWagerInput(e.target.value)}
-                  className="w-full bg-jeopardy-blue-light border-2 border-jeopardy-gold rounded-lg px-4 py-3 text-jeopardy-gold text-2xl text-center font-bold focus:outline-none"
+                  className="w-full bg-buzze-raised border-2 border-buzze-fuchsia rounded-lg px-4 py-3 text-buzze-fuchsia text-2xl text-center font-bold focus:outline-none"
                   placeholder="0"
                   autoFocus
                 />
@@ -227,9 +230,9 @@ export function PlayerGameView() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-jeopardy-blue/95 flex flex-col items-center justify-center p-4 md:p-6 z-50 gap-4 md:gap-6 overflow-y-auto"
+            className="fixed inset-0 bg-buzze-bg/95 flex flex-col items-center justify-center p-4 md:p-6 z-50 gap-4 md:gap-6 overflow-y-auto"
           >
-            <div className="text-jeopardy-gold text-xl">
+            <div className="text-buzze-fuchsia text-xl">
               ${activeQuestion.question.value}
               {phase === 'all_play' && <span className="ml-3 text-sm bg-yellow-500 text-black px-2 py-0.5 rounded font-bold">TODOS JOGAM</span>}
               {activeQuestion.question.type === 'double' && doubleWager !== null && <span className="ml-3 text-sm bg-purple-500 text-white px-2 py-0.5 rounded font-bold">DUPLA APOSTA ${doubleWager}</span>}
@@ -275,7 +278,7 @@ export function PlayerGameView() {
             {/* Tempo esgotado */}
             {timer?.remainingMs === 0 && !timer.isPaused && (
               <div
-                className="font-arcade text-2xl tracking-widest animate-pulse"
+                className="font-display text-2xl tracking-widest animate-pulse"
                 style={{ color: '#ef4444', textShadow: '0 0 20px rgba(239,68,68,0.7)' }}
               >
                 ⏰ TEMPO ESGOTADO!
@@ -296,14 +299,14 @@ export function PlayerGameView() {
                 disabled={!!buzzerPosition}
               >
                 {buzzerPosition
-                  ? buzzerPosition === 1 ? 'SUA VEZ!' : `#${buzzerPosition}`
-                  : 'BUZZ!'}
+                  ? buzzerPosition === 1 ? t('player.your_turn') : `#${buzzerPosition}`
+                  : t('player.buzz')}
               </motion.button>
             )}
 
             {phase === 'buzzer_queue' && buzzerPosition === 1 && (
-              <div className="text-green-400 text-lg font-arcade animate-pulse tracking-wider">
-                RESPONDA!
+              <div className="text-buzze-success text-lg font-display animate-pulse tracking-wider">
+                {t('player.respond')}
               </div>
             )}
           </motion.div>
@@ -315,12 +318,12 @@ export function PlayerGameView() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-jeopardy-blue flex flex-col items-center justify-center p-4 md:p-8 z-50 gap-4 md:gap-6 text-center overflow-y-auto"
+          className="fixed inset-0 bg-buzze-bg flex flex-col items-center justify-center p-4 md:p-8 z-50 gap-4 md:gap-6 text-center overflow-y-auto"
         >
-          <div className="text-jeopardy-gold text-xl">${activeQuestion.question.value}</div>
+          <div className="text-buzze-fuchsia text-xl">${activeQuestion.question.value}</div>
           {timer?.remainingMs === 0 && (
             <div
-              className="font-arcade text-xl tracking-widest"
+              className="font-display text-xl tracking-widest"
               style={{ color: '#ef4444', textShadow: '0 0 16px rgba(239,68,68,0.6)' }}
             >
               ⏰ TEMPO ESGOTADO!
@@ -346,16 +349,16 @@ export function PlayerGameView() {
 
           <p className="text-slate-400 text-lg italic max-w-xl">{activeQuestion.question.clue}</p>
 
-          <div className="border-t border-jeopardy-gold/30 pt-6 w-full max-w-xl">
+          <div className="border-t border-buzze-fuchsia/30 pt-6 w-full max-w-xl">
             <p className="text-slate-400 text-xs uppercase tracking-widest mb-2">Resposta</p>
-            <p className="text-2xl md:text-4xl font-bold text-jeopardy-gold leading-tight">{activeQuestion.question.answer}</p>
+            <p className="text-2xl md:text-4xl font-bold text-buzze-fuchsia leading-tight">{activeQuestion.question.answer}</p>
           </div>
 
           {activeQuestion.question.answerMedia && (
             <img
               src={`/media/${gameConfig.id}/${activeQuestion.question.answerMedia.filename}`}
               alt=""
-              className="max-h-56 object-contain rounded-xl border-2 border-jeopardy-gold/40"
+              className="max-h-56 object-contain rounded-xl border-2 border-buzze-fuchsia/40"
             />
           )}
           {activeQuestion.question.answerAudio && (
@@ -366,14 +369,14 @@ export function PlayerGameView() {
             />
           )}
 
-          <p className="text-slate-500 text-sm animate-pulse">Aguardando o host continuar...</p>
+          <p className="text-slate-500 text-sm animate-pulse">{ t('player.waiting_host_continue') }</p>
         </motion.div>
       )}
 
       {/* Desafio Final */}
       {phase === 'final_challenge' && (
-        <div className="fixed inset-0 bg-jeopardy-blue flex flex-col items-center justify-center p-4 md:p-6 z-50 gap-4 md:gap-6 overflow-y-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-jeopardy-gold">Desafio Final!</h2>
+        <div className="fixed inset-0 bg-buzze-bg flex flex-col items-center justify-center p-4 md:p-6 z-50 gap-4 md:gap-6 overflow-y-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-buzze-fuchsia">Desafio Final!</h2>
           {finalClue && (
             <p className="text-2xl font-bold text-center max-w-xl">{finalClue}</p>
           )}
@@ -396,7 +399,7 @@ export function PlayerGameView() {
                   max={Math.max(myPlayer?.score ?? 0, 0)}
                   value={wagerAmount}
                   onChange={(e) => setWagerAmount(e.target.value)}
-                  className="w-full bg-jeopardy-blue-light border-2 border-jeopardy-gold rounded-lg px-4 py-3 text-jeopardy-gold text-2xl text-center font-bold focus:outline-none"
+                  className="w-full bg-buzze-raised border-2 border-buzze-fuchsia rounded-lg px-4 py-3 text-buzze-fuchsia text-2xl text-center font-bold focus:outline-none"
                   placeholder="0"
                 />
               </div>
@@ -407,7 +410,7 @@ export function PlayerGameView() {
                   value={wagerAnswer}
                   onChange={(e) => setWagerAnswer(e.target.value)}
                   maxLength={500}
-                  className="w-full bg-jeopardy-blue-light border-2 border-slate-500 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-jeopardy-gold"
+                  className="w-full bg-buzze-raised border-2 border-slate-500 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-buzze-fuchsia"
                   placeholder="O que é..."
                 />
               </div>
@@ -419,18 +422,18 @@ export function PlayerGameView() {
             <div
               className="flex flex-col items-center gap-4 p-8 rounded-2xl text-center max-w-sm w-full"
               style={{
-                background: 'rgba(232,184,75,0.06)',
-                border: '1px solid rgba(232,184,75,0.2)',
+                background: 'rgba(124,58,237,0.08)',
+                border: '1px solid rgba(124,58,237,0.2)',
               }}
             >
               <div className="text-4xl animate-bounce">⏳</div>
-              <p className="font-arcade text-lg text-jeopardy-gold tracking-wide">APOSTA ENVIADA!</p>
-              <p className="text-slate-400 font-ui text-sm">Aguardando o host decidir...</p>
+              <p className="font-display text-lg text-buzze-fuchsia tracking-wide">APOSTA ENVIADA!</p>
+              <p className="text-slate-400 font-body text-sm">Aguardando o host decidir...</p>
               <div className="flex gap-1.5 mt-1">
                 {[0,1,2].map(i => (
                   <div
                     key={i}
-                    className="w-2 h-2 rounded-full bg-jeopardy-gold/40 animate-pulse"
+                    className="w-2 h-2 rounded-full bg-buzze-fuchsia/40 animate-pulse"
                     style={{ animationDelay: `${i * 0.2}s` }}
                   />
                 ))}
@@ -442,25 +445,25 @@ export function PlayerGameView() {
 
       {/* Aguardando revelação do Desafio Final */}
       {phase === 'final_reveal' && (
-        <div className="fixed inset-0 bg-jeopardy-blue flex flex-col items-center justify-center p-6 z-50 gap-6">
+        <div className="fixed inset-0 bg-buzze-bg flex flex-col items-center justify-center p-6 z-50 gap-6">
           <span className="text-5xl animate-bounce">🏆</span>
           <h2
-            className="font-arcade text-3xl text-jeopardy-gold text-center"
-            style={{ textShadow: '0 0 24px rgba(232,184,75,0.6)' }}
+            className="font-display text-3xl text-buzze-fuchsia text-center"
+            style={{ textShadow: '0 0 24px rgba(192,132,252,0.6)' }}
           >
             DESAFIO FINAL!
           </h2>
           <div
             className="flex flex-col items-center gap-3 p-6 rounded-2xl text-center max-w-sm w-full"
-            style={{ background: 'rgba(232,184,75,0.06)', border: '1px solid rgba(232,184,75,0.2)' }}
+            style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)' }}
           >
-            <p className="text-slate-300 font-ui">Aposta enviada!</p>
-            <p className="text-slate-500 font-ui text-sm">O host está revelando os resultados...</p>
+            <p className="text-slate-300 font-body">Aposta enviada!</p>
+            <p className="text-slate-500 font-body text-sm">O host está revelando os resultados...</p>
             <div className="flex gap-1.5 mt-2">
               {[0,1,2].map(i => (
                 <div
                   key={i}
-                  className="w-2 h-2 rounded-full bg-jeopardy-gold/40 animate-pulse"
+                  className="w-2 h-2 rounded-full bg-buzze-fuchsia/40 animate-pulse"
                   style={{ animationDelay: `${i * 0.2}s` }}
                 />
               ))}
@@ -471,10 +474,10 @@ export function PlayerGameView() {
 
       {/* Game Over */}
       {phase === 'game_over' && (
-        <div className="fixed inset-0 bg-jeopardy-blue flex flex-col items-center justify-center p-4 md:p-6 z-50 gap-4 md:gap-6 overflow-y-auto">
+        <div className="fixed inset-0 bg-buzze-bg flex flex-col items-center justify-center p-4 md:p-6 z-50 gap-4 md:gap-6 overflow-y-auto">
           <h2
-            className="font-arcade text-4xl md:text-5xl text-jeopardy-gold mb-2 md:mb-4"
-            style={{ textShadow: '0 0 30px rgba(232,184,75,0.7), 0 0 60px rgba(232,184,75,0.3)' }}
+            className="font-display text-4xl md:text-5xl text-buzze-fuchsia mb-2 md:mb-4"
+            style={{ textShadow: '0 0 30px rgba(192,132,252,0.7), 0 0 60px rgba(124,58,237,0.3)' }}
           >
             FIM DE JOGO!
           </h2>
@@ -483,7 +486,7 @@ export function PlayerGameView() {
               .sort((a, b) => b.score - a.score)
               .map((p, i) => {
                 const rankConfig = [
-                  { medal: '🥇', border: '#E8B84B', bg: 'rgba(232,184,75,0.15)', glow: '0 0 20px rgba(232,184,75,0.4)', textClass: 'text-jeopardy-gold', size: 'text-xl' },
+                  { medal: '🥇', border: '#c084fc', bg: 'rgba(124,58,237,0.15)', glow: '0 0 20px rgba(192,132,252,0.4)', textClass: 'text-buzze-fuchsia', size: 'text-xl' },
                   { medal: '🥈', border: '#94a3b8', bg: 'rgba(148,163,184,0.1)', glow: 'none', textClass: 'text-slate-300', size: 'text-lg' },
                   { medal: '🥉', border: '#f97316', bg: 'rgba(249,115,22,0.1)', glow: 'none', textClass: 'text-orange-400', size: 'text-base' },
                 ][i] ?? { medal: `#${i+1}`, border: '#334155', bg: 'rgba(51,65,85,0.4)', glow: 'none', textClass: 'text-slate-400', size: 'text-base' };
@@ -503,7 +506,7 @@ export function PlayerGameView() {
                   >
                     <span className="text-xl w-8 text-center">{rankConfig.medal}</span>
                     <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: p.avatarColor }} />
-                    <span className={`flex-1 font-ui font-bold ${rankConfig.textClass} ${rankConfig.size}`}>{p.name}</span>
+                    <span className={`flex-1 font-body font-bold ${rankConfig.textClass} ${rankConfig.size}`}>{p.name}</span>
                     <span className={`font-mono font-bold ${rankConfig.textClass}`}>
                       ${p.score.toLocaleString('pt-BR')}
                     </span>

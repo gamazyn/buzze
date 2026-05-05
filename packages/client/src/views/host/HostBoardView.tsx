@@ -97,7 +97,7 @@ export function HostBoardView() {
     <div className="fixed inset-0 flex flex-col p-4 gap-3 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="font-arcade text-xl text-jeopardy-gold truncate tracking-wide">{gameConfig.name}</h1>
+        <h1 className="font-display text-xl text-buzze-fuchsia truncate tracking-wide">{gameConfig.name}</h1>
         <div className="flex gap-2 flex-shrink-0">
           {gameConfig.finalChallengeEnabled && !isFinalPhase && (
             <button
@@ -173,7 +173,7 @@ export function HostBoardView() {
                 <label className="flex items-center gap-2 cursor-pointer pt-1">
                   <div
                     className="relative w-8 h-4 rounded-full transition-colors flex-shrink-0"
-                    style={{ background: autoReveal ? '#E8B84B' : '#1e3050' }}
+                    style={{ background: autoReveal ? '#c084fc' : '#1e3050' }}
                   >
                     <div
                       className="absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform"
@@ -181,7 +181,7 @@ export function HostBoardView() {
                     />
                     <input type="checkbox" checked={autoReveal} onChange={e => setAutoReveal(e.target.checked)} className="absolute inset-0 opacity-0 cursor-pointer" />
                   </div>
-                  <span className="text-xs font-ui" style={{ color: autoReveal ? '#E8B84B' : '#475569' }}>
+                  <span className="text-xs font-body" style={{ color: autoReveal ? '#c084fc' : '#475569' }}>
                     Revelar resposta ao fechar
                   </span>
                 </label>
@@ -201,7 +201,7 @@ export function HostBoardView() {
                 {activeQuestion?.question.type === 'challenge' ? (
                   // UI especial para challenge
                   <>
-                    <h3 className="text-jeopardy-gold font-bold text-sm">⚔️ Desafio</h3>
+                    <h3 className="text-buzze-fuchsia font-bold text-sm">⚔️ Desafio</h3>
                     {!challengeState?.challengedId ? (
                       // Passo 1: desafiador buzzou, selecionar desafiado
                       <>
@@ -214,7 +214,7 @@ export function HostBoardView() {
                             .map((p) => (
                               <button
                                 key={p.id}
-                                className="text-left py-1 px-2 rounded bg-slate-700 hover:bg-jeopardy-gold hover:text-jeopardy-blue text-sm font-bold transition-colors"
+                                className="text-left py-1 px-2 rounded bg-slate-700 hover:bg-jeopardy-gold hover:text-buzze-bg text-sm font-bold transition-colors"
                                 onClick={() => setChallenge(p.id)}
                               >
                                 {p.name}
@@ -228,7 +228,7 @@ export function HostBoardView() {
                       <>
                         <p className="text-xs text-slate-400">
                           <span className="text-white font-bold">{challengeState.challengerName}</span> desafia{' '}
-                          <span className="text-jeopardy-gold font-bold">{challengeState.challengedName}</span>
+                          <span className="text-buzze-fuchsia font-bold">{challengeState.challengedName}</span>
                         </p>
                         <p className="text-xs text-slate-500">
                           Certo: {challengeState.challengedName} +${activeQuestion.question.value}, {challengeState.challengerName} -${Math.floor(activeQuestion.question.value / 2)}
@@ -246,7 +246,7 @@ export function HostBoardView() {
                 ) : (
                   // UI padrão de fila
                   <>
-                    <h3 className="text-jeopardy-gold font-bold text-sm">Fila de Respostas</h3>
+                    <h3 className="text-buzze-fuchsia font-bold text-sm">Fila de Respostas</h3>
                     {pendingBuzzers.map((entry, i) => (
                       <div key={entry.playerId} className="flex flex-col gap-2 border-b border-slate-600 pb-2">
                         <div className="flex items-center gap-2">
@@ -277,10 +277,10 @@ export function HostBoardView() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-jeopardy-blue/95 backdrop-blur-sm flex items-center justify-center p-8 z-50"
+            className="fixed inset-0 bg-buzze-bg/95 backdrop-blur-sm flex items-center justify-center p-8 z-50"
           >
             <div className="max-w-3xl w-full text-center">
-              <div className="font-mono text-jeopardy-gold text-2xl mb-4" style={{ textShadow: '0 0 16px rgba(232,184,75,0.5)' }}>${activeQuestion.question.value}</div>
+              <div className="font-mono text-buzze-fuchsia text-2xl mb-4" style={{ textShadow: '0 0 16px rgba(192,132,252,0.5)' }}>${activeQuestion.question.value}</div>
               {activeQuestion.question.media && (
                 <img src={`/media/${gameConfig.id}/${activeQuestion.question.media.filename}`} alt="" className="mx-auto max-h-56 object-contain mb-4 rounded-xl" />
               )}
@@ -296,9 +296,9 @@ export function HostBoardView() {
                 />
               )}
               <p className="text-4xl font-bold leading-tight mb-8">{activeQuestion.question.clue}</p>
-              <p className="text-slate-400 italic mb-4 text-lg font-ui">{activeQuestion.question.answer}</p>
+              <p className="text-slate-400 italic mb-4 text-lg font-body">{activeQuestion.question.answer}</p>
               {activeQuestion.question.answerMedia && (
-                <img src={`/media/${gameConfig.id}/${activeQuestion.question.answerMedia.filename}`} alt="" className="mx-auto max-h-40 object-contain mb-3 rounded-xl opacity-80 border-2 border-jeopardy-gold/40" />
+                <img src={`/media/${gameConfig.id}/${activeQuestion.question.answerMedia.filename}`} alt="" className="mx-auto max-h-40 object-contain mb-3 rounded-xl opacity-80 border-2 border-buzze-violet/40" />
               )}
               {activeQuestion.question.answerAudio && (
                 <audio
@@ -315,7 +315,7 @@ export function HostBoardView() {
               {/* Tempo esgotado — host */}
               {timer?.remainingMs === 0 && !timer.isPaused && (
                 <div
-                  className="font-arcade text-xl tracking-widest animate-pulse mb-4"
+                  className="font-display text-xl tracking-widest animate-pulse mb-4"
                   style={{ color: '#ef4444', textShadow: '0 0 16px rgba(239,68,68,0.6)' }}
                 >
                   ⏰ TEMPO ESGOTADO!
@@ -336,7 +336,7 @@ export function HostBoardView() {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <div
                     className="relative w-8 h-4 rounded-full transition-colors flex-shrink-0"
-                    style={{ background: autoReveal ? '#E8B84B' : '#334155' }}
+                    style={{ background: autoReveal ? '#c084fc' : '#334155' }}
                   >
                     <div
                       className="absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform"
@@ -344,7 +344,7 @@ export function HostBoardView() {
                     />
                     <input type="checkbox" checked={autoReveal} onChange={e => setAutoReveal(e.target.checked)} className="absolute inset-0 opacity-0 cursor-pointer" />
                   </div>
-                  <span className="text-sm font-ui text-slate-400">Revelar resposta ao fechar</span>
+                  <span className="text-sm font-body text-slate-400">Revelar resposta ao fechar</span>
                 </label>
               </div>
             </div>
@@ -359,12 +359,12 @@ export function HostBoardView() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-jeopardy-blue/95 backdrop-blur-sm flex items-center justify-center p-8 z-50"
+            className="fixed inset-0 bg-buzze-bg/95 backdrop-blur-sm flex items-center justify-center p-8 z-50"
           >
             <div className="max-w-2xl w-full text-center flex flex-col items-center gap-6">
               <div className="text-6xl">🎯</div>
-              <h2 className="font-arcade text-4xl text-jeopardy-gold" style={{ textShadow: '0 0 24px rgba(232,184,75,0.6)' }}>DUPLA APOSTA!</h2>
-              <div className="font-mono text-jeopardy-gold text-xl">${activeQuestion.question.value} · {activeQuestion.question.clue}</div>
+              <h2 className="font-display text-4xl text-buzze-fuchsia" style={{ textShadow: '0 0 24px rgba(192,132,252,0.6)' }}>DUPLA APOSTA!</h2>
+              <div className="font-mono text-buzze-fuchsia text-xl">${activeQuestion.question.value} · {activeQuestion.question.clue}</div>
               <p className="text-slate-400 italic text-sm">{activeQuestion.question.answer}</p>
 
               {!doublePlayerId ? (
@@ -374,7 +374,7 @@ export function HostBoardView() {
                     {players.map((p) => (
                       <button
                         key={p.id}
-                        className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 hover:bg-jeopardy-gold hover:text-jeopardy-blue transition-colors font-bold"
+                        className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 hover:bg-jeopardy-gold hover:text-buzze-bg transition-colors font-bold"
                         onClick={() => assignDouble(p.id)}
                       >
                         <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: p.avatarColor }} />
@@ -404,10 +404,10 @@ export function HostBoardView() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-jeopardy-blue/95 backdrop-blur-sm flex items-center justify-center p-8 z-50"
+            className="fixed inset-0 bg-buzze-bg/95 backdrop-blur-sm flex items-center justify-center p-8 z-50"
           >
             <div className="max-w-3xl w-full text-center flex flex-col items-center gap-6">
-              <div className="font-mono text-jeopardy-gold text-2xl" style={{ textShadow: '0 0 16px rgba(232,184,75,0.5)' }}>${activeQuestion.question.value}</div>
+              <div className="font-mono text-buzze-fuchsia text-2xl" style={{ textShadow: '0 0 16px rgba(192,132,252,0.5)' }}>${activeQuestion.question.value}</div>
 
               {/* Clue (referência) */}
               {activeQuestion.question.media && (
@@ -434,14 +434,14 @@ export function HostBoardView() {
 
               <p className="text-slate-400 text-xl italic">{activeQuestion.question.clue}</p>
 
-              <div className="border-t border-jeopardy-gold/30 pt-6 w-full">
-                <p className="text-slate-400 text-xs uppercase tracking-widest mb-2 font-ui">Resposta</p>
-                <p className="text-4xl font-bold text-jeopardy-gold leading-tight" style={{ textShadow: '0 0 24px rgba(232,184,75,0.6)' }}>{activeQuestion.question.answer}</p>
+              <div className="border-t border-buzze-violet/30 pt-6 w-full">
+                <p className="text-slate-400 text-xs uppercase tracking-widest mb-2 font-body">Resposta</p>
+                <p className="text-4xl font-bold text-buzze-fuchsia leading-tight" style={{ textShadow: '0 0 24px rgba(192,132,252,0.6)' }}>{activeQuestion.question.answer}</p>
               </div>
 
               {/* Mídia da resposta */}
               {activeQuestion.question.answerMedia && (
-                <img src={`/media/${gameConfig.id}/${activeQuestion.question.answerMedia.filename}`} alt="" className="max-h-56 object-contain rounded-xl border-2 border-jeopardy-gold/40" />
+                <img src={`/media/${gameConfig.id}/${activeQuestion.question.answerMedia.filename}`} alt="" className="max-h-56 object-contain rounded-xl border-2 border-buzze-violet/40" />
               )}
               {activeQuestion.question.answerAudio && (
                 <audio
@@ -470,11 +470,11 @@ export function HostBoardView() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-jeopardy-blue/90 backdrop-blur-md flex flex-col items-center justify-start p-8 z-50 overflow-y-auto gap-6"
+            className="fixed inset-0 bg-buzze-bg/90 backdrop-blur-md flex flex-col items-center justify-start p-8 z-50 overflow-y-auto gap-6"
           >
             <h2
-              className="font-arcade text-4xl text-jeopardy-gold"
-              style={{ textShadow: '0 0 30px rgba(232,184,75,0.7), 0 0 60px rgba(232,184,75,0.3)' }}
+              className="font-display text-4xl text-buzze-fuchsia"
+              style={{ textShadow: '0 0 30px rgba(192,132,252,0.7), 0 0 60px rgba(124,58,237,0.3)' }}
             >
               DESAFIO FINAL!
             </h2>
@@ -484,7 +484,7 @@ export function HostBoardView() {
                 <p className="text-2xl font-bold leading-tight">{finalClue}</p>
                 {finalCorrectAnswer && (
                   <p className="text-slate-400 italic mt-3 text-lg">
-                    Resposta correta: <span className="text-jeopardy-gold">{finalCorrectAnswer}</span>
+                    Resposta correta: <span className="text-buzze-fuchsia">{finalCorrectAnswer}</span>
                   </p>
                 )}
               </div>
@@ -492,7 +492,7 @@ export function HostBoardView() {
 
             {/* Status de apostas */}
             <div className="card max-w-2xl w-full">
-              <h3 className="text-jeopardy-gold font-bold mb-3">
+              <h3 className="text-buzze-fuchsia font-bold mb-3">
                 Apostas recebidas: {totalWagered} / {totalPlayers}
               </h3>
               <div className="flex flex-col gap-2">
@@ -520,8 +520,8 @@ export function HostBoardView() {
                       {submitted && wager && !revealedWagers[p.id] && (
                         <div className="flex items-center gap-2">
                           <div className="text-right mr-2">
-                            <div className="text-jeopardy-gold font-mono font-bold text-sm">${wager.amount.toLocaleString('pt-BR')}</div>
-                            <div className="text-slate-300 text-xs italic max-w-[120px] truncate font-ui">{wager.answer}</div>
+                            <div className="text-buzze-fuchsia font-mono font-bold text-sm">${wager.amount.toLocaleString('pt-BR')}</div>
+                            <div className="text-slate-300 text-xs italic max-w-[120px] truncate font-body">{wager.answer}</div>
                           </div>
                           <button
                             className="bg-green-600 hover:bg-green-500 text-white font-bold py-1 px-3 rounded text-xs"
@@ -568,18 +568,18 @@ export function HostBoardView() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-jeopardy-blue/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 z-50 gap-6 overflow-y-auto"
+            className="fixed inset-0 bg-buzze-bg/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 z-50 gap-6 overflow-y-auto"
           >
             <h2
-              className="font-arcade text-5xl text-jeopardy-gold mb-2"
-              style={{ textShadow: '0 0 30px rgba(232,184,75,0.7), 0 0 60px rgba(232,184,75,0.3)' }}
+              className="font-display text-5xl text-buzze-fuchsia mb-2"
+              style={{ textShadow: '0 0 30px rgba(192,132,252,0.7), 0 0 60px rgba(124,58,237,0.3)' }}
             >
               FIM DE JOGO!
             </h2>
             <div className="flex flex-col gap-2 w-full max-w-md">
               {[...players].sort((a, b) => b.score - a.score).map((p, i) => {
                 const rankConfig = [
-                  { medal: '🥇', border: '#E8B84B', bg: 'rgba(232,184,75,0.15)', glow: '0 0 20px rgba(232,184,75,0.4)', textClass: 'text-jeopardy-gold', size: 'text-xl' },
+                  { medal: '🥇', border: '#c084fc', bg: 'rgba(124,58,237,0.15)', glow: '0 0 20px rgba(192,132,252,0.4)', textClass: 'text-buzze-fuchsia', size: 'text-xl' },
                   { medal: '🥈', border: '#94a3b8', bg: 'rgba(148,163,184,0.1)', glow: 'none', textClass: 'text-slate-300', size: 'text-lg' },
                   { medal: '🥉', border: '#f97316', bg: 'rgba(249,115,22,0.1)', glow: 'none', textClass: 'text-orange-400', size: 'text-base' },
                 ][i] ?? { medal: `#${i+1}`, border: '#334155', bg: 'rgba(51,65,85,0.4)', glow: 'none', textClass: 'text-slate-400', size: 'text-base' };
@@ -595,7 +595,7 @@ export function HostBoardView() {
                   >
                     <span className="text-xl w-8 text-center">{rankConfig.medal}</span>
                     <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: p.avatarColor }} />
-                    <span className={`flex-1 font-ui font-bold ${rankConfig.textClass} ${rankConfig.size}`}>{p.name}</span>
+                    <span className={`flex-1 font-body font-bold ${rankConfig.textClass} ${rankConfig.size}`}>{p.name}</span>
                     <span className={`font-mono font-bold ${rankConfig.textClass}`}>${p.score.toLocaleString('pt-BR')}</span>
                   </motion.div>
                 );

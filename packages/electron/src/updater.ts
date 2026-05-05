@@ -14,7 +14,7 @@ export function initUpdater(): void {
       .showMessageBox({
         type: 'info',
         title: 'Atualização disponível',
-        message: `Versão ${info.version} do Responde Aí! está disponível.`,
+        message: `Versão ${info.version} do buzze.io está disponível.`,
         detail: 'Deseja baixar agora? O app continuará funcionando durante o download.',
         buttons: ['Baixar', 'Agora não'],
         defaultId: 0,

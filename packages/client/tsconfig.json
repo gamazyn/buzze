@@ -12,7 +12,7 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "paths": {
-      "@responde-ai/shared": ["../shared/src/index.ts"]
+      "@buzze/shared": ["../shared/src/index.ts"]
     }
   },
   "include": ["src"],

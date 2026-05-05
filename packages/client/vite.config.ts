@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@responde-ai/shared': resolve(__dirname, '../shared/src/index.ts'),
+      '@buzze/shared': resolve(__dirname, '../shared/src/index.ts'),
     },
   },
   server: {

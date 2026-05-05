@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 const randomUUID = () => crypto.randomUUID();
-import type { GameConfig, Category, Question, MediaAsset } from '@responde-ai/shared';
+import type { GameConfig, Category, Question, MediaAsset } from '@buzze/shared';
 
 const DEFAULT_VALUES = [100, 200, 300, 400, 500];
 const FINAL_IDX = -1;
@@ -87,7 +87,7 @@ function MediaUpload({ gameId, media, label = '+ Mídia', accept = 'image/*,audi
         ) : (
           <img src={`/media/${gameId}/${media.filename}`} alt="" className="h-10 w-auto rounded-md object-cover border border-slate-700" />
         )}
-        <label className="cursor-pointer text-xs font-ui text-jeopardy-gold border border-jeopardy-gold/40 rounded-lg px-2.5 py-1 hover:bg-jeopardy-gold/10 transition-colors">
+        <label className="cursor-pointer text-xs font-body text-buzze-fuchsia border border-buzze-fuchsia/40 rounded-lg px-2.5 py-1 hover:bg-buzze-fuchsia/10 transition-colors">
           {uploading ? '...' : 'Trocar'}
           <input type="file" accept={accept} className="hidden" onChange={handleFile} disabled={uploading} />
         </label>
@@ -101,7 +101,7 @@ function MediaUpload({ gameId, media, label = '+ Mídia', accept = 'image/*,audi
 
   return (
     <div>
-      <label className="cursor-pointer text-sm font-ui text-slate-300 rounded-lg px-3 py-2 hover:border-jeopardy-gold/60 hover:text-jeopardy-gold transition-colors flex items-center gap-1.5" style={{ border: '1px dashed #3a5272', background: 'rgba(10,18,35,0.8)' }}>
+      <label className="cursor-pointer text-sm font-body text-slate-300 rounded-lg px-3 py-2 hover:border-buzze-fuchsia/60 hover:text-buzze-fuchsia transition-colors flex items-center gap-1.5" style={{ border: '1px dashed rgba(124,58,237,0.3)', background: '#0d0b18' }}>
         <span className="text-base leading-none">+</span>
         {uploading ? 'Enviando...' : label}
         <input type="file" accept={accept} className="hidden" onChange={handleFile} disabled={uploading} />
@@ -232,14 +232,14 @@ export function EditorView() {
       className="h-screen flex flex-col overflow-hidden"
       style={{
         background: '#0F172A',
-        backgroundImage: 'radial-gradient(ellipse at 50% 0%, #1a2e45 0%, #0F172A 65%)',
+        backgroundImage: 'none',
       }}
     >
       {/* grid background sutil */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          backgroundImage: 'linear-gradient(rgba(232,184,75,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(232,184,75,0.03) 1px, transparent 1px)',
+          backgroundImage: 'linear-gradient(rgba(124,58,237,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(124,58,237,0.3) 1px, transparent 1px)',
           backgroundSize: '60px 60px',
           zIndex: 0,
         }}
@@ -247,7 +247,7 @@ export function EditorView() {
       {/* ── Top bar ─────────────────────────────────────────────────── */}
       <div
         className="flex-shrink-0 flex items-center gap-3 px-4 h-14 border-b relative z-10"
-        style={{ background: 'rgba(10,18,35,0.85)', backdropFilter: 'blur(8px)', borderColor: '#1a2535' }}
+        style={{ background: 'rgba(7,6,15,0.9)', backdropFilter: 'blur(8px)', borderColor: 'rgba(255,255,255,0.08)' }}
       >
         <button
           className="btn-ghost text-sm py-1.5 px-3 flex-shrink-0"
@@ -261,12 +261,12 @@ export function EditorView() {
           placeholder="Nome do quiz..."
           value={game.name}
           onChange={(e) => setGame((g) => ({ ...g, name: e.target.value }))}
-          className="flex-1 bg-transparent border-none text-white font-arcade text-base focus:outline-none min-w-0"
-          style={{ caretColor: '#E8B84B', letterSpacing: '0.05em' }}
+          className="flex-1 bg-transparent border-none text-white font-display text-base focus:outline-none min-w-0"
+          style={{ caretColor: '#c084fc', letterSpacing: '0.05em' }}
         />
-        {error && <p className="text-red-400 text-xs font-ui flex-shrink-0">{error}</p>}
+        {error && <p className="text-red-400 text-xs font-body flex-shrink-0">{error}</p>}
         {!gameId && (
-          <span className="text-amber-600/70 font-ui text-xs flex-shrink-0 hidden sm:block">
+          <span className="text-amber-600/70 font-body text-xs flex-shrink-0 hidden sm:block">
             💡 Salve para adicionar mídia
           </span>
         )}
@@ -285,10 +285,10 @@ export function EditorView() {
         {/* ── LEFT SIDEBAR ─────────────────────────────────────────── */}
         <div
           className="w-52 flex-shrink-0 flex flex-col border-r overflow-hidden"
-          style={{ background: '#070e1a', borderColor: '#1a2535' }}
+          style={{ background: '#070e1a', borderColor: 'rgba(255,255,255,0.08)' }}
         >
           {/* Category list */}
-          <div className="flex-shrink-0 p-3 border-b" style={{ borderColor: '#1a2535' }}>
+          <div className="flex-shrink-0 p-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
             <p className="text-slate-400 font-mono text-xs uppercase tracking-widest mb-2 px-1">Categorias</p>
             <div className="flex flex-col gap-1">
               {game.categories.map((c, i) => (
@@ -310,7 +310,7 @@ export function EditorView() {
                 </div>
               ))}
               <button
-                className="w-full mt-1 py-2 px-3 rounded-lg text-slate-400 hover:text-jeopardy-gold font-ui text-xs border border-dashed border-slate-800 hover:border-jeopardy-gold/30 transition-all"
+                className="w-full mt-1 py-2 px-3 rounded-lg text-slate-400 hover:text-buzze-fuchsia font-body text-xs border border-dashed border-slate-800 hover:border-buzze-fuchsia/30 transition-all"
                 onClick={addCategory}
               >
                 + Categoria
@@ -331,21 +331,21 @@ export function EditorView() {
                   className="w-full text-left rounded-xl p-2.5 transition-all duration-150 flex items-center gap-2.5"
                   style={{
                     background: isActive ? 'linear-gradient(160deg, #1e3a5f 0%, #0d1f33 100%)' : 'rgba(255,255,255,0.03)',
-                    border: isActive ? '1px solid rgba(232,184,75,0.5)' : '1px solid rgba(255,255,255,0.07)',
+                    border: isActive ? '1px solid rgba(124,58,237,0.3)' : '1px solid rgba(255,255,255,0.07)',
                     borderLeft: isActive ? '2px solid #E8B84B' : '2px solid transparent',
                   }}
                 >
                   <span
                     className="font-mono font-bold text-sm leading-none flex-shrink-0 w-10 text-right"
                     style={{
-                      color: isActive ? '#E8B84B' : '#94a3b8',
-                      textShadow: isActive ? '0 0 10px rgba(232,184,75,0.4)' : 'none',
+                      color: isActive ? '#c084fc' : '#94a3b8',
+                      textShadow: isActive ? '0 0 10px rgba(124,58,237,0.3)' : 'none',
                     }}
                   >
                     ${qItem.value}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-ui truncate" style={{ color: isActive ? '#e2e8f0' : '#64748b' }}>
+                    <p className="text-xs font-body truncate" style={{ color: isActive ? '#e2e8f0' : '#64748b' }}>
                       {qItem.clue || <span className="italic" style={{ color: '#334155' }}>sem clue</span>}
                     </p>
                     {qItem.type !== 'standard' && (
@@ -360,7 +360,7 @@ export function EditorView() {
             {cat && cat.questions.length < 10 && (
               <button
                 type="button"
-                className="w-full mt-1 py-2 px-3 rounded-xl font-ui text-xs text-slate-400 hover:text-jeopardy-gold border border-dashed border-slate-800 hover:border-jeopardy-gold/30 transition-all"
+                className="w-full mt-1 py-2 px-3 rounded-xl font-body text-xs text-slate-400 hover:text-buzze-fuchsia border border-dashed border-slate-800 hover:border-buzze-fuchsia/30 transition-all"
                 onClick={() => addQuestion(selectedCat)}
               >
                 + Questão
@@ -369,7 +369,7 @@ export function EditorView() {
           </div>
 
           {/* Desafio Final entry */}
-          <div className="flex-shrink-0 p-2 border-t" style={{ borderColor: '#1a2535' }}>
+          <div className="flex-shrink-0 p-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
             <button
               onClick={() => setSelectedCat(FINAL_IDX)}
               className="w-full text-left rounded-xl p-3 transition-all duration-150 flex items-center gap-2.5"
@@ -377,19 +377,19 @@ export function EditorView() {
                 background: isFinal
                   ? 'linear-gradient(160deg, #1e3a20 0%, #0d1f10 100%)'
                   : 'rgba(255,255,255,0.02)',
-                border: isFinal ? '1px solid rgba(232,184,75,0.4)' : '1px solid rgba(255,255,255,0.04)',
+                border: isFinal ? '1px solid rgba(124,58,237,0.3)' : '1px solid rgba(255,255,255,0.04)',
                 borderLeft: isFinal ? '2px solid #E8B84B' : '2px solid rgba(255,255,255,0.04)',
               }}
             >
               <span className="text-base leading-none flex-shrink-0">🏆</span>
               <div className="min-w-0">
                 <p
-                  className="font-arcade text-xs uppercase tracking-wider leading-none"
-                  style={{ color: isFinal ? '#E8B84B' : '#475569' }}
+                  className="font-display text-xs uppercase tracking-wider leading-none"
+                  style={{ color: isFinal ? '#c084fc' : '#475569' }}
                 >
                   Desafio Final
                 </p>
-                <p className="text-[10px] font-ui mt-0.5" style={{ color: game.finalChallengeEnabled ? '#4ade80' : '#475569' }}>
+                <p className="text-[10px] font-body mt-0.5" style={{ color: game.finalChallengeEnabled ? '#4ade80' : '#475569' }}>
                   {game.finalChallengeEnabled ? 'habilitado' : 'desabilitado'}
                 </p>
               </div>
@@ -406,7 +406,7 @@ export function EditorView() {
               {/* Category header — visually separated */}
               <div
                 className="flex-shrink-0 px-8 pt-8 pb-6 border-b"
-                style={{ borderColor: '#1a2535' }}
+                style={{ borderColor: 'rgba(255,255,255,0.08)' }}
               >
                 <p className="text-slate-400 font-mono text-xs uppercase tracking-widest mb-2">Categoria</p>
                 <div className="flex items-center gap-4 mb-3">
@@ -415,8 +415,8 @@ export function EditorView() {
                     placeholder="NOME DA CATEGORIA"
                     value={cat.name}
                     onChange={(e) => updateCategory(selectedCat, { name: e.target.value })}
-                    className="editor-input flex-1 font-arcade text-2xl uppercase"
-                    style={{ caretColor: '#E8B84B', letterSpacing: '0.1em' }}
+                    className="editor-input flex-1 font-display text-2xl uppercase"
+                    style={{ caretColor: '#c084fc', letterSpacing: '0.1em' }}
                   />
                   <span className="text-slate-400 font-mono text-sm flex-shrink-0">
                     {selectedQ + 1} / {cat.questions.length}
@@ -437,8 +437,8 @@ export function EditorView() {
                   value={game.description}
                   onChange={(e) => setGame((g) => ({ ...g, description: e.target.value }))}
                   maxLength={500}
-                  className="editor-input font-ui text-sm"
-                  style={{ caretColor: '#E8B84B' }}
+                  className="editor-input font-body text-sm"
+                  style={{ caretColor: '#c084fc' }}
                 />
               </div>
 
@@ -448,17 +448,17 @@ export function EditorView() {
                   {/* Clue */}
                   <div className="flex flex-col gap-2">
                     <label className="flex items-center gap-2">
-                      <span className="font-mono text-xs uppercase tracking-widest font-bold" style={{ color: '#E8B84B' }}>
+                      <span className="font-mono text-xs uppercase tracking-widest font-bold" style={{ color: '#c084fc' }}>
                         Clue
                       </span>
-                      <span className="text-slate-400 font-ui text-xs">— aparece na tela para os jogadores</span>
+                      <span className="text-slate-400 font-body text-xs">— aparece na tela para os jogadores</span>
                     </label>
                     <textarea
                       placeholder="Digite a pista aqui..."
                       value={q.clue}
                       onChange={(e) => updateQuestion(selectedCat, selectedQ, { clue: e.target.value })}
                       rows={4}
-                      className="editor-textarea font-ui text-base leading-relaxed"
+                      className="editor-textarea font-body text-base leading-relaxed"
                     />
                     {gameId && (
                       <div className="flex gap-4 mt-1">
@@ -484,14 +484,14 @@ export function EditorView() {
                       <span className="font-mono text-xs uppercase tracking-widest font-bold text-slate-400">
                         Resposta
                       </span>
-                      <span className="text-slate-400 font-ui text-xs">— visível apenas ao host</span>
+                      <span className="text-slate-400 font-body text-xs">— visível apenas ao host</span>
                     </label>
                     <input
                       type="text"
                       placeholder="Resposta correta..."
                       value={q.answer}
                       onChange={(e) => updateQuestion(selectedCat, selectedQ, { answer: e.target.value })}
-                      className="editor-input font-ui text-sm"
+                      className="editor-input font-body text-sm"
                       style={{ color: '#cbd5e1' }}
                     />
                     {gameId && (
@@ -523,7 +523,7 @@ export function EditorView() {
                         placeholder="Ex: jogador com mais pontos (opcional)"
                         value={q.challengeTarget ?? ''}
                         onChange={(e) => updateQuestion(selectedCat, selectedQ, { challengeTarget: e.target.value || undefined })}
-                        className="editor-input font-ui text-sm"
+                        className="editor-input font-body text-sm"
                         style={{ borderColor: 'rgba(251,146,60,0.3)', color: '#fb923c' }}
                       />
                     </div>
@@ -534,7 +534,7 @@ export function EditorView() {
                     <button
                       disabled={selectedQ === 0}
                       onClick={() => setSelectedQ((q) => q - 1)}
-                      className="font-ui text-sm px-4 py-2 rounded-lg transition-all disabled:opacity-20"
+                      className="font-body text-sm px-4 py-2 rounded-lg transition-all disabled:opacity-20"
                       style={{ color: '#94a3b8', border: '1px solid rgba(255,255,255,0.06)' }}
                     >
                       ← anterior
@@ -548,7 +548,7 @@ export function EditorView() {
                           style={{
                             width: qi === selectedQ ? '20px' : '8px',
                             height: '8px',
-                            background: qi === selectedQ ? '#E8B84B' : '#1e3050',
+                            background: qi === selectedQ ? '#7c3aed' : '#15122a',
                           }}
                         />
                       ))}
@@ -556,7 +556,7 @@ export function EditorView() {
                     <button
                       disabled={selectedQ === cat.questions.length - 1}
                       onClick={() => setSelectedQ((q) => q + 1)}
-                      className="font-ui text-sm px-4 py-2 rounded-lg transition-all disabled:opacity-20"
+                      className="font-body text-sm px-4 py-2 rounded-lg transition-all disabled:opacity-20"
                       style={{ color: '#94a3b8', border: '1px solid rgba(255,255,255,0.06)' }}
                     >
                       próxima →
@@ -572,25 +572,25 @@ export function EditorView() {
             <>
               <div
                 className="flex-shrink-0 px-8 pt-8 pb-6 border-b"
-                style={{ borderColor: '#1a2535' }}
+                style={{ borderColor: 'rgba(255,255,255,0.08)' }}
               >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-slate-400 font-mono text-xs uppercase tracking-widest mb-2">Questão Especial</p>
                     <h2
-                      className="font-arcade text-2xl"
-                      style={{ color: '#E8B84B', textShadow: '0 0 20px rgba(232,184,75,0.4), 0 2px 0 #8a6a1a', letterSpacing: '0.1em' }}
+                      className="font-display text-2xl"
+                      style={{ color: '#c084fc', textShadow: '0 0 20px rgba(124,58,237,0.3), 0 2px 0 #3b0764', letterSpacing: '0.1em' }}
                     >
                       🏆 DESAFIO FINAL
                     </h2>
                   </div>
                   <label className="flex items-center gap-3 cursor-pointer">
-                    <span className="text-slate-400 font-ui text-sm">
+                    <span className="text-slate-400 font-body text-sm">
                       {game.finalChallengeEnabled ? 'Habilitado' : 'Desabilitado'}
                     </span>
                     <div
                       className="relative w-11 h-6 rounded-full transition-colors"
-                      style={{ background: game.finalChallengeEnabled ? '#E8B84B' : '#1e3050' }}
+                      style={{ background: game.finalChallengeEnabled ? '#7c3aed' : '#15122a' }}
                     >
                       <div
                         className="absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform"
@@ -611,17 +611,17 @@ export function EditorView() {
                 <div className="flex-1 px-8 py-6 flex flex-col gap-6">
                   <div className="flex flex-col gap-2">
                     <label className="flex items-center gap-2">
-                      <span className="font-mono text-xs uppercase tracking-widest font-bold" style={{ color: '#E8B84B' }}>
+                      <span className="font-mono text-xs uppercase tracking-widest font-bold" style={{ color: '#c084fc' }}>
                         Clue
                       </span>
-                      <span className="text-slate-400 font-ui text-xs">— aparece na tela para os jogadores</span>
+                      <span className="text-slate-400 font-body text-xs">— aparece na tela para os jogadores</span>
                     </label>
                     <textarea
                       placeholder="Digite a pista do Desafio Final..."
                       value={game.finalChallengeClue}
                       onChange={(e) => setGame((g) => ({ ...g, finalChallengeClue: e.target.value }))}
                       rows={4}
-                      className="editor-textarea font-ui text-base leading-relaxed"
+                      className="editor-textarea font-body text-base leading-relaxed"
                     />
                     {gameId && (
                       <div className="mt-1">
@@ -641,14 +641,14 @@ export function EditorView() {
                       <span className="font-mono text-xs uppercase tracking-widest font-bold text-slate-400">
                         Resposta
                       </span>
-                      <span className="text-slate-400 font-ui text-xs">— visível apenas ao host</span>
+                      <span className="text-slate-400 font-body text-xs">— visível apenas ao host</span>
                     </label>
                     <input
                       type="text"
                       placeholder="Resposta correta..."
                       value={game.finalChallengeAnswer}
                       onChange={(e) => setGame((g) => ({ ...g, finalChallengeAnswer: e.target.value }))}
-                      className="editor-input font-ui text-sm"
+                      className="editor-input font-body text-sm"
                       style={{ color: '#cbd5e1' }}
                     />
                   </div>
@@ -657,7 +657,7 @@ export function EditorView() {
 
               {!game.finalChallengeEnabled && (
                 <div className="flex-1 flex items-center justify-center">
-                  <p className="text-slate-400 font-ui text-sm">Habilite o Desafio Final para editar</p>
+                  <p className="text-slate-400 font-body text-sm">Habilite o Desafio Final para editar</p>
                 </div>
               )}
             </>
@@ -667,18 +667,18 @@ export function EditorView() {
         {/* ── RIGHT PANEL ──────────────────────────────────────────── */}
         <div
           className="w-60 flex-shrink-0 flex flex-col border-l overflow-y-auto"
-          style={{ background: '#070e1a', borderColor: '#1a2535' }}
+          style={{ background: '#070e1a', borderColor: 'rgba(255,255,255,0.08)' }}
         >
           {/* Normal question properties */}
           {q && qMeta && !isFinal && (
             <>
               {/* Value */}
-              <div className="p-4 border-b" style={{ borderColor: '#1a2535' }}>
+              <div className="p-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
                 <p className="text-slate-400 font-mono text-xs uppercase tracking-widest mb-3">Valor</p>
                 <div className="flex items-center gap-1">
                   <span
                     className="font-mono font-bold text-3xl"
-                    style={{ color: '#E8B84B', textShadow: '0 0 16px rgba(232,184,75,0.4)' }}
+                    style={{ color: '#c084fc', textShadow: '0 0 16px rgba(124,58,237,0.3)' }}
                   >
                     $
                   </span>
@@ -687,13 +687,13 @@ export function EditorView() {
                     value={q.value}
                     onChange={(e) => updateQuestion(selectedCat, selectedQ, { value: Number(e.target.value) })}
                     className="bg-transparent border-none font-mono font-bold text-3xl focus:outline-none w-24"
-                    style={{ color: '#E8B84B', caretColor: '#E8B84B' }}
+                    style={{ color: '#c084fc', caretColor: '#c084fc' }}
                   />
                 </div>
               </div>
 
               {/* Type */}
-              <div className="p-4 border-b" style={{ borderColor: '#1a2535' }}>
+              <div className="p-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
                 <p className="text-slate-400 font-mono text-xs uppercase tracking-widest mb-3">Tipo</p>
                 <div className="flex flex-col gap-1.5">
                   {(Object.entries(TYPE_META) as [Question['type'], typeof TYPE_META[keyof typeof TYPE_META]][]).map(([type, meta]) => (
@@ -710,7 +710,7 @@ export function EditorView() {
                         className="w-2 h-2 rounded-full flex-shrink-0"
                         style={{ background: meta.color, boxShadow: q.type === type ? `0 0 6px ${meta.color}` : 'none' }}
                       />
-                      <span className="font-ui text-xs font-bold" style={{ color: q.type === type ? meta.color : '#475569' }}>
+                      <span className="font-body text-xs font-bold" style={{ color: q.type === type ? meta.color : '#475569' }}>
                         {meta.label}
                       </span>
                     </button>
@@ -719,7 +719,7 @@ export function EditorView() {
               </div>
 
               {/* Timer */}
-              <div className="p-4 border-b" style={{ borderColor: '#1a2535' }}>
+              <div className="p-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
                 <p className="text-slate-400 font-mono text-xs uppercase tracking-widest mb-3">Timer</p>
                 <div className="flex items-center gap-2">
                   <input
@@ -729,7 +729,7 @@ export function EditorView() {
                     onChange={(e) => updateQuestion(selectedCat, selectedQ, { timeOverride: e.target.value ? Number(e.target.value) : undefined })}
                     className="editor-input font-mono text-center text-sm w-20"
                   />
-                  <span className="text-slate-500 text-xs font-ui">seg</span>
+                  <span className="text-slate-500 text-xs font-body">seg</span>
                   {q.timeOverride && (
                     <button
                       onClick={() => updateQuestion(selectedCat, selectedQ, { timeOverride: undefined })}
@@ -739,13 +739,13 @@ export function EditorView() {
                     </button>
                   )}
                 </div>
-                <p className="text-slate-400 font-ui text-xs mt-1">Padrão: {game.defaultTimer}s</p>
+                <p className="text-slate-400 font-body text-xs mt-1">Padrão: {game.defaultTimer}s</p>
               </div>
             </>
           )}
 
           {/* Global settings — always visible */}
-          <div className="p-4 border-b" style={{ borderColor: '#1a2535' }}>
+          <div className="p-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
             <p className="text-slate-400 font-mono text-xs uppercase tracking-widest mb-3">Timer Padrão</p>
             <div className="flex items-center gap-2">
               <input
@@ -754,7 +754,7 @@ export function EditorView() {
                 onChange={(e) => setGame((g) => ({ ...g, defaultTimer: Number(e.target.value) }))}
                 className="editor-input font-mono text-center text-sm w-20"
               />
-              <span className="text-slate-500 text-xs font-ui">seg</span>
+              <span className="text-slate-500 text-xs font-body">seg</span>
             </div>
           </div>
 
