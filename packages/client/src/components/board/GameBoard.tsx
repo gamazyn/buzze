@@ -8,6 +8,7 @@ interface Props {
   onSelectQuestion?: (categoryId: string, questionId: string) => void;
   activeQuestionId?: string | null;
   fillHeight?: boolean;
+  showTypeBadges?: boolean;
 }
 
 function CategoryName({ name }: { name: string }) {
@@ -26,12 +27,13 @@ function CategoryName({ name }: { name: string }) {
 }
 
 const TYPE_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-  all_play:  { label: 'type_all_play',  bg: 'rgba(62,230,122,0.18)',  color: '#3ee67a' },
-  challenge: { label: 'type_challenge', bg: 'rgba(255,200,87,0.18)',  color: '#ffc857' },
-  double:    { label: 'type_double',    bg: 'rgba(124,58,237,0.28)',  color: '#c084fc' },
+  all_play:    { label: 'type_all_play',    bg: 'rgba(62,230,122,0.18)',  color: '#3ee67a' },
+  challenge:   { label: 'type_challenge',   bg: 'rgba(255,200,87,0.18)',  color: '#ffc857' },
+  double:      { label: 'type_double',      bg: 'rgba(124,58,237,0.28)',  color: '#c084fc' },
+  speed_round: { label: 'type_speed_round', bg: 'rgba(62,230,122,0.18)',  color: '#3ee67a' },
 };
 
-export function GameBoard({ categories, gameId, onSelectQuestion, activeQuestionId, fillHeight = false }: Props) {
+export function GameBoard({ categories, gameId, onSelectQuestion, activeQuestionId, fillHeight = false, showTypeBadges = false }: Props) {
   const { t } = useTranslation();
   const maxQuestions = Math.max(...categories.map((c) => c.questions.length));
   return (
@@ -75,7 +77,7 @@ export function GameBoard({ categories, gameId, onSelectQuestion, activeQuestion
                 key={q.id}
                 whileHover={!q.used ? { scale: 1.03 } : {}}
                 whileTap={!q.used ? { scale: 0.97 } : {}}
-                className={`question-cell relative ${fillHeight ? '' : 'min-h-[60px] max-h-[110px]'} ${q.used ? 'used' : ''} ${
+                className={`question-cell relative ${fillHeight ? '' : 'min-h-[80px] max-h-[140px]'} ${q.used ? 'used' : ''} ${
                   isActive ? 'ring-2 ring-buzze-violet' : ''
                 }`}
                 onClick={() => {
@@ -84,7 +86,7 @@ export function GameBoard({ categories, gameId, onSelectQuestion, activeQuestion
                   }
                 }}
               >
-                {!q.used && TYPE_BADGE[q.type] && (
+                {showTypeBadges && !q.used && TYPE_BADGE[q.type] && (
                   <span
                     className="absolute top-1 right-1 font-mono font-bold leading-none"
                     style={{
