@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence } from 'framer-motion';
 import { socket } from '../socket.js';
 import { useGameStore } from '../store/gameStore.js';
 import { usePlayerStore } from '../store/playerStore.js';
@@ -13,6 +15,14 @@ interface GameSummary {
   updatedAt: string;
 }
 
+const ACCENT_PALETTE = ['#7c3aed', '#c084fc', '#f0abfc', '#ffc857', '#3ee67a', '#60a5fa', '#f97316'];
+
+function gameAccent(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) | 0;
+  return ACCENT_PALETTE[Math.abs(h) % ACCENT_PALETTE.length];
+}
+
 export function HostSetupView() {
   const navigate = useNavigate();
   const { setSession, reset: resetGame } = useGameStore();
@@ -23,6 +33,7 @@ export function HostSetupView() {
   const [loading, setLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<GameSummary | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const { t } = useTranslation();
 
   function loadGames() {
     fetch('/api/games')
@@ -31,19 +42,15 @@ export function HostSetupView() {
       .catch(() => setGames([]));
   }
 
-  useEffect(() => {
-    loadGames();
-  }, []);
+  useEffect(() => { loadGames(); }, []);
 
   function handleHost() {
     if (!selected) return;
     setLoading(true);
     setError('');
-
     resetGame();
     socket.disconnect();
     socket.connect();
-
     socket.once('connect', () => {
       setMyId(socket.id ?? '');
       socket.emit('host:create', { gameConfigId: selected }, (res) => {
@@ -54,7 +61,7 @@ export function HostSetupView() {
           return;
         }
         setSession(res.sessionId, res.hostToken, res.tunnelUrl, res.localUrl, true);
-        navigate(`/host/${res.sessionId}`);
+        navigate(`/host/${res.sessionId}`, { state: { gameId: selected } });
       });
     });
   }
@@ -67,7 +74,7 @@ export function HostSetupView() {
       if (selected === deleteTarget.id) setSelected(null);
       setGames((gs) => gs.filter((g) => g.id !== deleteTarget.id));
     } catch {
-      setError('Erro ao deletar jogo');
+      setError(t('errors.generic'));
     } finally {
       setDeleting(false);
       setDeleteTarget(null);
@@ -75,155 +82,295 @@ export function HostSetupView() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* grid background */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage: 'linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
-        }}
-      />
+    <div style={{ minHeight: '100vh', background: '#07060f', display: 'flex', flexDirection: 'column' }}>
+      {/* Grid bg */}
+      <div style={{
+        position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0,
+        backgroundImage: 'linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px)',
+        backgroundSize: '60px 60px',
+      }} />
 
-      <div className="w-full max-w-2xl relative z-10">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => navigate('/')}
-            className="text-buzze-fg-dim hover:text-buzze-fg-sub text-sm font-body transition-colors mb-4 flex items-center gap-1"
-          >
-            ← Voltar
-          </button>
-          <div className="flex items-center gap-3 mb-2">
-            <BuzzeLogo size={22} />
+      {/* Top nav */}
+      <div style={{
+        position: 'relative', zIndex: 10,
+        padding: '18px 28px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        borderBottom: '1px solid rgba(255,255,255,0.05)',
+      }}>
+        <BuzzeLogo size={20} />
+        <button
+          onClick={() => navigate('/')}
+          style={{
+            fontFamily: 'JetBrains Mono, monospace', fontSize: 10,
+            color: '#c084fc', letterSpacing: '0.15em', textTransform: 'uppercase',
+            background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(192,132,252,0.3)',
+            borderRadius: 8, padding: '6px 14px', cursor: 'pointer', transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLElement).style.background = 'rgba(124,58,237,0.2)';
+            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(192,132,252,0.6)';
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLElement).style.background = 'rgba(124,58,237,0.1)';
+            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(192,132,252,0.3)';
+          }}
+        >
+          {t('host_setup.back')}
+        </button>
+      </div>
+
+      {/* Main content */}
+      <div style={{
+        flex: 1, position: 'relative', zIndex: 10,
+        maxWidth: 900, margin: '0 auto', width: '100%',
+        padding: '36px 28px 140px',
+      }}>
+        {/* Page header */}
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 36 }}>
+          <p style={{
+            fontFamily: 'JetBrains Mono, monospace', fontSize: 9, fontWeight: 700,
+            letterSpacing: '0.22em', color: '#7c3aed', textTransform: 'uppercase', margin: '0 0 10px',
+          }}>
+            {t('host_setup.hosting')}
+          </p>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap' }}>
+            <h1 style={{
+              fontFamily: 'Syne, system-ui, sans-serif', fontWeight: 800,
+              fontSize: 'clamp(26px, 4vw, 40px)', color: '#f0ecff',
+              letterSpacing: '-0.02em', margin: 0,
+            }}>
+              {t('host_setup.choose_game')}
+            </h1>
+            {games.length > 0 && (
+              <span style={{
+                fontFamily: 'JetBrains Mono, monospace', fontSize: 11,
+                color: '#3a3558', letterSpacing: '0.08em',
+              }}>
+                {t('host_setup.games_count', { count: games.length })}
+              </span>
+            )}
           </div>
-          <p className="text-buzze-fg-dim font-body text-xs uppercase tracking-widest mb-1">🎙️ Hospedar</p>
-          <h1 className="font-display text-4xl text-buzze-fuchsia" style={{ textShadow: '0 0 20px rgba(192,132,252,0.4)' }}>
-            ESCOLHA UM JOGO
-          </h1>
-        </div>
+        </motion.div>
 
+        {/* Empty state */}
         {games.length === 0 ? (
-          <div
-            className="rounded-2xl p-8 text-center"
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
             style={{
               background: 'linear-gradient(160deg, #15122a 0%, #0d0b18 100%)',
               border: '1px solid rgba(124,58,237,0.2)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+              borderRadius: 20, padding: '64px 40px', textAlign: 'center',
             }}
           >
-            <div className="text-4xl mb-4">📋</div>
-            <p className="text-slate-300 font-body mb-2">Nenhum jogo salvo ainda.</p>
-            <p className="text-slate-500 font-body text-sm mb-6">Crie seu primeiro quiz para começar.</p>
-            <button className="btn-primary" onClick={() => navigate('/editor')}>
-              Criar Jogo
-            </button>
-          </div>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 32, color: '#3a3558', marginBottom: 16 }}>[ ]</div>
+            <p style={{ fontFamily: 'Syne, system-ui, sans-serif', fontWeight: 700, fontSize: 18, color: '#f0ecff', margin: '0 0 8px' }}>{t('host_setup.no_games_title')}</p>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 13, color: '#6b6390', margin: '0 0 28px' }}>{t('host_setup.no_games_hint')}</p>
+            <button className="btn-primary" onClick={() => navigate('/editor')}>{t('host_setup.create_game')}</button>
+          </motion.div>
         ) : (
-          <div className="flex flex-col gap-3 mb-6">
-            {games.map((g) => {
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
+            {games.map((g, index) => {
               const isSelected = selected === g.id;
+              const accent = gameAccent(g.name);
               return (
-                <div
+                <motion.div
                   key={g.id}
-                  onClick={() => setSelected(g.id)}
-                  className="rounded-2xl cursor-pointer transition-all duration-200"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.06, ease: 'easeOut' }}
+                  onClick={() => setSelected(isSelected ? null : g.id)}
                   style={{
                     background: isSelected
-                      ? 'linear-gradient(160deg, #1e1a38 0%, #15122a 100%)'
+                      ? `linear-gradient(160deg, rgba(124,58,237,0.13) 0%, #0d0b18 100%)`
                       : '#0d0b18',
-                    border: isSelected ? '1px solid rgba(192,132,252,0.5)' : '1px solid rgba(255,255,255,0.06)',
+                    border: `1px solid ${isSelected ? 'rgba(192,132,252,0.5)' : 'rgba(255,255,255,0.07)'}`,
                     boxShadow: isSelected
-                      ? '0 0 0 1px rgba(124,58,237,0.2), 0 8px 24px rgba(0,0,0,0.4)'
-                      : '0 2px 8px rgba(0,0,0,0.3)',
-                    borderLeft: isSelected ? '3px solid #c084fc' : '3px solid transparent',
+                      ? `0 0 0 1px rgba(124,58,237,0.2), 0 8px 40px rgba(124,58,237,0.12)`
+                      : 'none',
+                    borderRadius: 16,
+                    cursor: 'pointer',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    transition: 'all 0.2s ease',
                   }}
                 >
-                  <div className="flex items-start justify-between gap-3 p-5">
-                    <div className="flex-1 min-w-0">
-                      <div
-                        className="font-body font-bold text-lg truncate"
-                        style={{ color: isSelected ? '#c084fc' : '#e2e8f0' }}
-                      >
-                        {g.name}
+                  {/* Accent top bar */}
+                  <div style={{
+                    height: 3,
+                    background: isSelected
+                      ? `linear-gradient(90deg, ${accent}, #c084fc)`
+                      : `linear-gradient(90deg, ${accent}55, transparent)`,
+                    transition: 'all 0.25s ease',
+                  }} />
+
+                  <div style={{ padding: '18px 18px 20px' }}>
+                    {/* Avatar + action buttons row */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                      <div style={{
+                        width: 46, height: 46, borderRadius: 13,
+                        background: `linear-gradient(135deg, ${accent}1a, ${accent}35)`,
+                        border: `1px solid ${accent}40`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontFamily: 'Syne, system-ui, sans-serif',
+                        fontWeight: 800, fontSize: 22, color: accent,
+                        flexShrink: 0,
+                        transition: 'all 0.2s ease',
+                        boxShadow: isSelected ? `0 0 16px ${accent}30` : 'none',
+                      }}>
+                        {g.name[0].toUpperCase()}
                       </div>
-                      {g.description && (
-                        <div className="text-slate-400 font-body text-sm mt-1 truncate">{g.description}</div>
-                      )}
-                      <div className="text-slate-600 font-body text-xs mt-2 uppercase tracking-wider">
-                        Atualizado {new Date(g.updatedAt).toLocaleDateString('pt-BR')}
+
+                      {/* Icon action buttons */}
+                      <div style={{ display: 'flex', gap: 6 }} onClick={e => e.stopPropagation()}>
+                        <button
+                          title={t('host_setup.edit')}
+                          onClick={() => navigate(`/editor/${g.id}`)}
+                          style={{
+                            width: 30, height: 30, borderRadius: 8,
+                            background: 'rgba(255,255,255,0.04)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            color: '#6b6390', fontSize: 13,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', transition: 'all 0.15s ease',
+                          }}
+                          onMouseEnter={e => {
+                            const el = e.currentTarget as HTMLElement;
+                            el.style.borderColor = 'rgba(192,132,252,0.5)';
+                            el.style.color = '#c084fc';
+                            el.style.background = 'rgba(124,58,237,0.1)';
+                          }}
+                          onMouseLeave={e => {
+                            const el = e.currentTarget as HTMLElement;
+                            el.style.borderColor = 'rgba(255,255,255,0.08)';
+                            el.style.color = '#6b6390';
+                            el.style.background = 'rgba(255,255,255,0.04)';
+                          }}
+                        >
+                          ✎
+                        </button>
+                        <button
+                          title={t('host_setup.delete')}
+                          onClick={() => setDeleteTarget(g)}
+                          style={{
+                            width: 30, height: 30, borderRadius: 8,
+                            background: 'rgba(255,77,109,0.06)',
+                            border: '1px solid rgba(255,77,109,0.2)',
+                            color: '#ff4d6d', fontSize: 13,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', transition: 'background 0.15s ease',
+                          }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,77,109,0.18)'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,77,109,0.06)'; }}
+                        >
+                          ✕
+                        </button>
                       </div>
                     </div>
-                    <div className="flex gap-2 flex-shrink-0 items-center" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        className="text-xs py-1.5 px-3 rounded-lg font-body transition-all duration-150"
-                        style={{
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          color: '#94a3b8',
-                        }}
-                        onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLElement).style.borderColor = 'rgba(192,132,252,0.5)';
-                          (e.currentTarget as HTMLElement).style.color = '#c084fc';
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.1)';
-                          (e.currentTarget as HTMLElement).style.color = '#94a3b8';
-                        }}
-                        onClick={() => navigate(`/editor/${g.id}`)}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        className="text-xs py-1.5 px-3 rounded-lg font-body transition-all duration-150"
-                        style={{ border: '1px solid rgba(239,68,68,0.4)', color: '#f87171' }}
-                        onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.15)';
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLElement).style.background = 'transparent';
-                        }}
-                        onClick={() => setDeleteTarget(g)}
-                      >
-                        Deletar
-                      </button>
+
+                    {/* Game info */}
+                    <div style={{
+                      fontFamily: 'Syne, system-ui, sans-serif', fontWeight: 700, fontSize: 15,
+                      color: isSelected ? '#c084fc' : '#f0ecff',
+                      marginBottom: g.description ? 6 : 10,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      transition: 'color 0.2s ease',
+                    }}>
+                      {g.name}
+                    </div>
+
+                    {g.description && (
+                      <div style={{
+                        fontFamily: 'DM Sans, sans-serif', fontSize: 12, color: '#6b6390',
+                        marginBottom: 10,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        {g.description}
+                      </div>
+                    )}
+
+                    <div style={{
+                      fontFamily: 'JetBrains Mono, monospace', fontSize: 9,
+                      color: '#3a3558', letterSpacing: '0.1em', textTransform: 'uppercase',
+                    }}>
+                      {t('host_setup.updated', { date: new Date(g.updatedAt).toLocaleDateString() })}
                     </div>
                   </div>
-                </div>
+
+                  {/* Selected checkmark badge */}
+                  <AnimatePresence>
+                    {isSelected && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0 }}
+                        style={{
+                          position: 'absolute', bottom: 14, right: 14,
+                          width: 20, height: 20, borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #7c3aed, #c084fc)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 10, color: '#fff', fontWeight: 700,
+                        }}
+                      >
+                        ✓
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
               );
             })}
           </div>
         )}
 
         {error && (
-          <p className="text-red-400 mb-4 text-center font-body text-sm">{error}</p>
+          <p style={{
+            color: '#ff4d6d', textAlign: 'center',
+            fontFamily: 'DM Sans, sans-serif', fontSize: 13, marginTop: 16,
+          }}>
+            {error}
+          </p>
         )}
+      </div>
 
-        <div className="flex gap-3 mt-2">
-          {games.length > 0 && (
+      {/* Fixed bottom CTA bar */}
+      {games.length > 0 && (
+        <motion.div
+          initial={{ y: 80, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.15 }}
+          style={{
+            position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 20,
+            padding: '16px 28px 28px',
+            background: 'linear-gradient(to top, #07060f 70%, transparent)',
+            display: 'flex', justifyContent: 'center',
+          }}
+        >
+          <div style={{ maxWidth: 560, width: '100%', display: 'flex', gap: 10 }}>
             <button
-              className="btn-primary flex-1 text-base"
+              className="btn-primary"
+              style={{ flex: 1, fontSize: 15, opacity: selected && !loading ? 1 : 0.45, transition: 'opacity 0.2s' }}
               disabled={!selected || loading}
               onClick={handleHost}
             >
-              {loading ? 'Criando sala...' : '🎙️ Criar Sala'}
+              {loading ? t('host_setup.creating') : t('host_setup.create_room')}
             </button>
-          )}
-          <button
-            className="btn-ghost"
-            onClick={() => navigate('/editor')}
-            style={{ whiteSpace: 'nowrap' }}
-          >
-            + Novo Jogo
-          </button>
-        </div>
-      </div>
+            <button
+              className="btn-ghost"
+              style={{ whiteSpace: 'nowrap' }}
+              onClick={() => navigate('/editor')}
+            >
+              {t('host_setup.new_game')}
+            </button>
+          </div>
+        </motion.div>
+      )}
 
       <ConfirmModal
         open={!!deleteTarget}
-        title={`Deletar "${deleteTarget?.name}"?`}
-        description="O jogo e todas as mídias serão deletados permanentemente. Esta ação não pode ser desfeita."
-        confirmLabel={deleting ? 'Deletando...' : 'Deletar'}
-        cancelLabel="Cancelar"
+        title={t('host_setup.delete_confirm_title', { name: deleteTarget?.name })}
+        description={t('host_setup.delete_confirm_desc')}
+        confirmLabel={deleting ? t('host_setup.deleting') : t('host_setup.delete')}
+        cancelLabel={t('host_setup.cancel')}
         danger
         onConfirm={confirmDelete}
         onCancel={() => setDeleteTarget(null)}

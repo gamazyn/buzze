@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   remainingMs: number;
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export function QuestionTimer({ remainingMs, totalMs, isPaused }: Props) {
+  const { t } = useTranslation();
   const seconds = Math.ceil(remainingMs / 1000);
   const pct = totalMs > 0 ? remainingMs / totalMs : 0;
 
@@ -43,7 +45,7 @@ export function QuestionTimer({ remainingMs, totalMs, isPaused }: Props) {
       </div>
       {isPaused && (
         <span className="text-buzze-warn text-xs font-bold uppercase tracking-wider font-mono">
-          ⏸ PAUSADO
+          {t('timer.paused')}
         </span>
       )}
     </div>

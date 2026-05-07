@@ -1,25 +1,73 @@
 # buzze.io
 
-Quiz show ao vivo para jogar online com seus amigos. O host controla o board numa tela grande enquanto os jogadores se conectam pelo celular ou PC para apertar o buzzer.
+**The live quiz show for your crew.** Host on the big screen while friends join from their phones, buzz in, and answer. First to press wins the round.
 
-## Funcionalidades
+![buzze.io](https://img.shields.io/badge/buzze.io-live%20quiz-7c3aed?style=flat-square) ![License](https://img.shields.io/badge/license-GPL--3.0-c084fc?style=flat-square) ![Node](https://img.shields.io/badge/node-v20+-3ee67a?style=flat-square)
 
-- **Board customizável** — categorias, questões e valores configuráveis
-- **Buzzer online** — fila ordenada por timestamp server-side (sem trapaças)
-- **Questões especiais** — Todos Jogam, Desafie um Jogador, Dupla Aposta
-- **Desafio Final** — apostas em segredo, revelação dramática pelo host
-- **Timer** — 60s padrão, com pause, extensão e valor customizado
-- **Mídia** — imagens e áudio nas questões e categorias
-- **QR Code** — jogadores escaneiam e entram direto na sala, sem digitar código
-- **Acesso remoto** — tunnel automático via localtunnel, sem configuração
-- **Multilíngue** — PT-BR, EN e ES com detecção automática de idioma
+---
 
-## Requisitos
+## Features
+
+- **Custom board** — categories, questions, and point values fully configurable
+- **Real-time buzzer** — server-side timestamp queue, no cheating
+- **Special questions** — All Play, Challenge a Player, Double Wager
+- **Final Challenge** — secret bets, dramatic reveal by the host
+- **Timer** — 60s default, with pause, extension, and per-question overrides
+- **Media** — images and audio on questions and categories
+- **QR Code** — players scan to join instantly, no code typing needed
+- **Remote access** — automatic tunnel via localtunnel, zero config
+- **Multilingual** — PT-BR, EN and ES with automatic language detection
+- **Desktop app** — Electron build for macOS, Windows and Linux
+
+---
+
+## Download
+
+Download the latest installer from the [Releases](https://github.com/gamazyn/buzze/releases) page:
+
+| Platform | File |
+|---|---|
+| Windows | `buzze-*-x64.exe` (installer) |
+| macOS (Apple Silicon) | `buzze-*-arm64.zip` |
+| macOS (Intel) | `buzze-*-x64.zip` |
+| Linux | `buzze-*-x86_64.AppImage` |
+
+> **Security note:** the binaries are not signed with a paid certificate. See the platform-specific instructions below.
+
+### Windows
+
+SmartScreen may show a warning when opening the installer. To proceed:
+
+1. Click **More info**
+2. Click **Run anyway**
+
+### macOS
+
+Gatekeeper will block the app on first launch. To allow it:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/buzze.io.app
+```
+
+Or: right-click the app → **Open** → **Open** in the confirmation dialog.
+
+### Linux
+
+Make the AppImage executable and run it directly:
+
+```bash
+chmod +x buzze-*.AppImage
+./buzze-*.AppImage
+```
+
+---
+
+## Requirements
 
 - [Node.js](https://nodejs.org) v20+
 - [pnpm](https://pnpm.io) v9+
 
-## Instalação
+## Installation
 
 ```bash
 git clone https://github.com/gamazyn/buzze
@@ -27,89 +75,99 @@ cd buzze
 pnpm install
 ```
 
-### Carregar jogo de teste
+### Load a sample game
 
-Para testar rapidamente sem criar um jogo do zero:
+To test quickly without creating a game from scratch:
 
 ```bash
 pnpm seed
 ```
 
-Isso importa o **Jogo de Teste** da pasta `samples/` para `data/games/`. O jogo contém 5 categorias com 5 questões cada, incluindo questões especiais como *Todos Jogam* e *Desafie um Jogador*.
+Imports the **Test Game** from `samples/` into `data/games/`. It has 5 categories with 5 questions each, including special questions like *All Play* and *Challenge a Player*.
 
-## Rodando em desenvolvimento
+---
+
+## Running in development
 
 ```bash
 pnpm dev
 ```
 
-Isso inicia o servidor (`:3000`) e o cliente (`:5173`) em paralelo.
+Starts the server (`:3000`) and client (`:5173`) in parallel.
 
-Acesse **http://localhost:5173** no browser.
+Open **http://localhost:5173** in your browser.
 
-## Como jogar
+---
 
-### 1. Criar um jogo
+## How to play
 
-1. Abra o app e clique em **Editor de Quizzes**
-2. Adicione categorias e preencha as questões
-3. Configure o Desafio Final (opcional)
-4. Clique em **Salvar**
+### 1. Create a game
 
-### 2. Hospedar uma sala
+1. Open the app and click **Editor**
+2. Add categories and fill in the questions
+3. Configure the Final Challenge (optional)
+4. Click **Save**
 
-1. Na tela inicial, clique em **Criar Sala**
-2. Selecione o jogo criado e clique em **Criar Sala**
-3. Compartilhe o **QR Code** (mesma rede) ou o **link remoto** com seus amigos
-4. Quando todos entrarem, clique em **Iniciar Jogo**
+### 2. Host a room
 
-### 3. Entrar como jogador
+1. On the home screen, click **Create room**
+2. Select the game and click **Create Room**
+3. Share the **QR Code** (same network) or the **remote link** with your friends
+4. When everyone has joined, click **Start Game**
 
-- **QR Code** — escaneie com a câmera, digite o nome e entre direto
-- **Link remoto** — acesse o link compartilhado pelo host
-- **Manualmente** — abra o app, digite seu nome e o código de 6 letras
+### 3. Join as a player
 
-### 4. Fluxo do jogo
+- **QR Code** — scan with your camera, enter your name and join directly
+- **Remote link** — open the link shared by the host
+- **Manual** — open the app, enter your name and the 6-letter room code
 
-- O host clica em uma questão do board para revelá-la
-- Os jogadores pressionam **BUZZ** para responder
-- A fila de buzzers aparece para o host em ordem de quem apertou primeiro
-- O host julga a resposta: **Correto** (+pontos) ou **Errado** (−pontos)
-- Quando todas as questões forem respondidas, o **Desafio Final** é habilitado automaticamente
+### 4. Game flow
 
-## Estrutura do Projeto
+1. Host clicks a question on the board to reveal it
+2. Players press **BUZZ** to answer — the server orders the queue
+3. Host sees the buzzer queue in order and calls on the first player
+4. Host judges the answer: **Correct** (+points) or **Wrong** (−points)
+5. Once all questions are done, the **Final Challenge** unlocks automatically
+
+---
+
+## Project structure
 
 ```
 buzze/
 ├── packages/
-│   ├── shared/     # Tipos TypeScript e utilitários compartilhados
-│   ├── server/     # Backend Node.js + Express + Socket.io
-│   ├── client/     # Frontend React + Vite + Tailwind
+│   ├── shared/     # Shared TypeScript types and utilities
+│   ├── server/     # Node.js + Express + Socket.io backend
+│   ├── client/     # React + Vite + Tailwind frontend
 │   └── electron/   # Desktop app (Electron)
+├── samples/        # Sample games for seeding
+└── data/           # Runtime data (games, uploads)
 ```
 
 ## Stack
 
-| Camada | Tecnologia |
+| Layer | Technology |
 |---|---|
 | Frontend | React 18 + TypeScript + Vite + Tailwind + Framer Motion |
 | Backend | Node.js + Express + Socket.io |
 | Desktop | Electron |
-| i18n | react-i18next |
+| i18n | react-i18next (PT-BR · EN · ES) |
 | Monorepo | pnpm workspaces + Turborepo |
 | Tunnel | localtunnel |
 
 ## Scripts
 
-| Comando | Descrição |
+| Command | Description |
 |---|---|
-| `pnpm dev` | Inicia server + client em modo dev |
-| `pnpm build` | Build de produção |
-| `pnpm type-check` | Checa tipos em todos os packages |
-| `pnpm seed` | Importa os jogos de exemplo de `samples/` para `data/` |
-| `pnpm electron:dev` | Inicia o app Electron em modo dev |
-| `pnpm electron:dist` | Gera o instalador do app desktop |
+| `pnpm dev` | Start server + client in dev mode |
+| `pnpm build` | Production build |
+| `pnpm type-check` | Type-check all packages |
+| `pnpm seed` | Import sample games from `samples/` into `data/` |
+| `pnpm electron:dev` | Start the Electron app in dev mode |
+| `pnpm electron:dist` | Build the desktop installer |
 
-## Licença
+---
+
+## License
 
 [GPL-3.0](LICENSE)

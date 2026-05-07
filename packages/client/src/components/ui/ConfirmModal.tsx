@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   open: boolean;
@@ -15,12 +16,15 @@ export function ConfirmModal({
   open,
   title,
   description,
-  confirmLabel = 'Confirmar',
-  cancelLabel = 'Cancelar',
+  confirmLabel,
+  cancelLabel,
   onConfirm,
   onCancel,
   danger = false,
 }: Props) {
+  const { t } = useTranslation();
+  const resolvedConfirm = confirmLabel ?? t('confirm.confirm');
+  const resolvedCancel = cancelLabel ?? t('confirm.cancel');
   return (
     <AnimatePresence>
       {open && (
@@ -44,7 +48,7 @@ export function ConfirmModal({
             )}
             <div className="flex gap-3 justify-end">
               <button className="btn-ghost py-2 px-5 text-sm" onClick={onCancel}>
-                {cancelLabel}
+                {resolvedCancel}
               </button>
               <button
                 className={`py-2 px-5 rounded-lg font-bold text-sm transition-colors ${
@@ -54,7 +58,7 @@ export function ConfirmModal({
                 }`}
                 onClick={onConfirm}
               >
-                {confirmLabel}
+                {resolvedConfirm}
               </button>
             </div>
           </motion.div>

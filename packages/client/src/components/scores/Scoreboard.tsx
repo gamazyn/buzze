@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import type { Player } from '@buzze/shared';
 
 interface Props {
@@ -13,7 +14,27 @@ const RANK_STYLES = [
   { border: '#f97316', bg: 'rgba(249,115,22,0.06)', glow: 'none' },
 ];
 
+function PlayerAvatar({ name, color, size = 28 }: { name: string; color: string; size?: number }) {
+  return (
+    <div
+      className="flex-shrink-0 flex items-center justify-center rounded-full font-display font-bold"
+      style={{
+        width: size,
+        height: size,
+        background: color,
+        color: '#07060f',
+        fontSize: Math.round(size * 0.43),
+        lineHeight: 1,
+        boxShadow: `0 0 8px ${color}55`,
+      }}
+    >
+      {name.charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
 export function Scoreboard({ players, myId, compact = false }: Props) {
+  const { t } = useTranslation();
   const sorted = [...players].sort((a, b) => b.score - a.score);
 
   if (compact) {
@@ -32,7 +53,7 @@ export function Scoreboard({ players, myId, compact = false }: Props) {
                 boxShadow: player.id === myId ? '0 0 0 1px rgba(192,132,252,0.5)' : 'none',
               }}
             >
-              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: player.avatarColor }} />
+              <PlayerAvatar name={player.name} color={player.avatarColor} size={22} />
               <span className={`text-xs truncate max-w-[64px] font-body ${!player.isConnected ? 'opacity-50' : ''}`}>
                 {player.name}
               </span>
@@ -54,7 +75,7 @@ export function Scoreboard({ players, myId, compact = false }: Props) {
   return (
     <div className="flex flex-col gap-1">
       <h3 className="text-buzze-fuchsia font-display text-xs uppercase tracking-widest mb-2">
-        Placar
+        {t('scoreboard.title')}
       </h3>
       <AnimatePresence>
         {sorted.map((player, i) => {
@@ -75,10 +96,7 @@ export function Scoreboard({ players, myId, compact = false }: Props) {
                   : rank?.glow ?? 'none',
               }}
             >
-              <div
-                className="w-3 h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: player.avatarColor }}
-              />
+              <PlayerAvatar name={player.name} color={player.avatarColor} size={28} />
               <span className="flex-1 text-sm truncate font-body">
                 {player.name}
                 {isMe && <span className="text-buzze-fuchsia text-xs ml-1 opacity-70">●</span>}
