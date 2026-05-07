@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import type { Category } from '@responde-ai/shared';
+import { useTranslation } from 'react-i18next';
+import type { Category } from '@buzze/shared';
 
 interface Props {
   categories: Category[];
@@ -7,9 +8,33 @@ interface Props {
   onSelectQuestion?: (categoryId: string, questionId: string) => void;
   activeQuestionId?: string | null;
   fillHeight?: boolean;
+  showTypeBadges?: boolean;
 }
 
-export function GameBoard({ categories, gameId, onSelectQuestion, activeQuestionId, fillHeight = false }: Props) {
+function CategoryName({ name }: { name: string }) {
+  const words = name.trim().split(/\s+/);
+  const base = words.slice(0, -1).join(' ');
+  const last = words[words.length - 1];
+  return (
+    <span
+      className="font-display uppercase text-xs md:text-sm leading-tight tracking-widest"
+      style={{ textShadow: '0 1px 8px rgba(0,0,0,0.9)' }}
+    >
+      {base && <span style={{ color: '#6b6390' }}>{base} </span>}
+      <span style={{ color: words.length > 1 ? '#c084fc' : '#6b6390' }}>{last}</span>
+    </span>
+  );
+}
+
+const TYPE_BADGE: Record<string, { label: string; bg: string; color: string }> = {
+  all_play:    { label: 'type_all_play',    bg: 'rgba(62,230,122,0.18)',  color: '#3ee67a' },
+  challenge:   { label: 'type_challenge',   bg: 'rgba(255,200,87,0.18)',  color: '#ffc857' },
+  double:      { label: 'type_double',      bg: 'rgba(124,58,237,0.28)',  color: '#c084fc' },
+  speed_round: { label: 'type_speed_round', bg: 'rgba(62,230,122,0.18)',  color: '#3ee67a' },
+};
+
+export function GameBoard({ categories, gameId, onSelectQuestion, activeQuestionId, fillHeight = false, showTypeBadges = false }: Props) {
+  const { t } = useTranslation();
   const maxQuestions = Math.max(...categories.map((c) => c.questions.length));
   return (
     <div
@@ -23,21 +48,17 @@ export function GameBoard({ categories, gameId, onSelectQuestion, activeQuestion
       {categories.map((cat) => (
         <div
           key={cat.id}
-          className={`border-4 border-slate-800 flex items-center justify-center text-center p-1 md:p-3 overflow-hidden ${fillHeight ? '' : 'min-h-[80px]'}`}
+          className={`flex items-center justify-center text-center p-1 md:p-3 overflow-hidden ${fillHeight ? '' : 'min-h-[50px] max-h-[80px]'}`}
           style={{
-            background: 'linear-gradient(180deg, #1e3a5f 0%, #0d1f33 100%)',
-            boxShadow: 'inset 0 2px 0 rgba(255,255,255,0.08), inset 0 -3px 0 rgba(0,0,0,0.5)',
+            background: 'linear-gradient(180deg, #15122a 0%, #0d0b18 100%)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -2px 0 rgba(0,0,0,0.5)',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
           }}
         >
           {cat.media ? (
             <img src={`/media/${gameId}/${cat.media.filename}`} alt={cat.name} className="max-h-16 object-contain" />
           ) : (
-            <span
-              className="font-arcade text-white uppercase text-xs md:text-sm leading-tight tracking-widest"
-              style={{ textShadow: '0 1px 8px rgba(0,0,0,0.9), 0 0 20px rgba(255,255,255,0.1)' }}
-            >
-              {cat.name}
-            </span>
+            <CategoryName name={cat.name} />
           )}
         </div>
       ))}
@@ -56,8 +77,8 @@ export function GameBoard({ categories, gameId, onSelectQuestion, activeQuestion
                 key={q.id}
                 whileHover={!q.used ? { scale: 1.03 } : {}}
                 whileTap={!q.used ? { scale: 0.97 } : {}}
-                className={`question-cell ${fillHeight ? '' : 'aspect-[4/3]'} ${q.used ? 'used' : ''} ${
-                  isActive ? 'ring-4 ring-jeopardy-gold' : ''
+                className={`question-cell relative ${fillHeight ? '' : 'min-h-[80px] max-h-[140px]'} ${q.used ? 'used' : ''} ${
+                  isActive ? 'ring-2 ring-buzze-violet' : ''
                 }`}
                 onClick={() => {
                   if (!q.used && onSelectQuestion) {
@@ -65,6 +86,21 @@ export function GameBoard({ categories, gameId, onSelectQuestion, activeQuestion
                   }
                 }}
               >
+                {showTypeBadges && !q.used && TYPE_BADGE[q.type] && (
+                  <span
+                    className="absolute top-1 right-1 font-mono font-bold leading-none"
+                    style={{
+                      fontSize: 9,
+                      letterSpacing: '0.06em',
+                      padding: '2px 5px',
+                      borderRadius: 4,
+                      background: TYPE_BADGE[q.type].bg,
+                      color: TYPE_BADGE[q.type].color,
+                    }}
+                  >
+                    {t(`host_board.${TYPE_BADGE[q.type].label}`)}
+                  </span>
+                )}
                 {q.used ? '' : `$${q.value}`}
               </motion.div>
             );

@@ -12,7 +12,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@responde-ai/shared': new URL('../shared/src/index.ts', import.meta.url).pathname,
+      '@buzze/shared': new URL('../shared/src/index.ts', import.meta.url).pathname,
     },
   },
 });

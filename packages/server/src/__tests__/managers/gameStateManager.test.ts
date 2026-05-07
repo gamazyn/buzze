@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { canTransition, isHostAction, allQuestionsUsed } from '../../managers/gameStateManager.js';
-import type { GamePhase } from '@responde-ai/shared';
+import type { GamePhase } from '@buzze/shared';
 
 describe('canTransition', () => {
   it('lobby → board é válido', () => {

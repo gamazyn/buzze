@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   remainingMs: number;
@@ -7,15 +8,16 @@ interface Props {
 }
 
 export function QuestionTimer({ remainingMs, totalMs, isPaused }: Props) {
+  const { t } = useTranslation();
   const seconds = Math.ceil(remainingMs / 1000);
   const pct = totalMs > 0 ? remainingMs / totalMs : 0;
 
-  const color = pct > 0.5 ? '#22C55E' : pct > 0.25 ? '#EAB308' : '#EF4444';
+  const color = pct > 0.5 ? '#7c3aed' : pct > 0.25 ? '#ffc857' : '#ff4d6d';
   const glow = pct > 0.5
-    ? 'rgba(34,197,94,0.7)'
+    ? 'rgba(124,58,237,0.7)'
     : pct > 0.25
-    ? 'rgba(234,179,8,0.7)'
-    : 'rgba(239,68,68,0.7)';
+    ? 'rgba(255,200,87,0.7)'
+    : 'rgba(255,77,109,0.7)';
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -30,7 +32,7 @@ export function QuestionTimer({ remainingMs, totalMs, isPaused }: Props) {
       >
         {seconds}
       </div>
-      <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+      <div className="w-full h-2 bg-buzze-raised rounded-full overflow-hidden">
         <motion.div
           className="h-full rounded-full"
           style={{
@@ -42,8 +44,8 @@ export function QuestionTimer({ remainingMs, totalMs, isPaused }: Props) {
         />
       </div>
       {isPaused && (
-        <span className="text-yellow-400 text-xs font-bold uppercase tracking-wider font-mono">
-          ⏸ PAUSADO
+        <span className="text-buzze-warn text-xs font-bold uppercase tracking-wider font-mono">
+          {t('timer.paused')}
         </span>
       )}
     </div>

@@ -1,6 +1,6 @@
 import type { Server, Socket } from 'socket.io';
-import type { ServerToClientEvents, ClientToServerEvents, BuzzerEntry, SpeedRoundCorrect } from '@responde-ai/shared';
-import { sanitizeAnswer } from '@responde-ai/shared';
+import type { ServerToClientEvents, ClientToServerEvents, BuzzerEntry, SpeedRoundCorrect } from '@buzze/shared';
+import { sanitizeAnswer } from '@buzze/shared';
 import { getSession, updateSession } from '../managers/sessionManager.js';
 import { validateHostToken } from '../middleware/authMiddleware.js';
 import { socketRateLimit } from '../middleware/rateLimiter.js';

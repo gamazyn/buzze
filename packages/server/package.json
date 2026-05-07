@@ -1,5 +1,5 @@
 {
-  "name": "@responde-ai/server",
+  "name": "@buzze/server",
   "version": "1.0.2",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@responde-ai/shared": "workspace:*",
+    "@buzze/shared": "workspace:*",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",

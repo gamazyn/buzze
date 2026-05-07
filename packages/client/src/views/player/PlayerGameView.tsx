@@ -1,59 +1,65 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { socket } from '../../socket.js';
 import { useGameStore } from '../../store/gameStore.js';
 import { usePlayerStore } from '../../store/playerStore.js';
 import { useSocketEvents } from '../../hooks/useSocketEvents.js';
 import { GameBoard } from '../../components/board/GameBoard.js';
-import { Scoreboard } from '../../components/scores/Scoreboard.js';
+import { BuzzeLogo } from '../../components/ui/BuzzeLogo.js';
+import { useTranslation } from 'react-i18next';
 import { QuestionTimer } from '../../components/question/QuestionTimer.js';
 
+function Avatar({ name, color, size = 32 }: { name: string; color: string; size?: number }) {
+  return (
+    <div
+      style={{
+        width: size, height: size, borderRadius: '50%',
+        background: color, color: '#07060f',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: 'Syne, system-ui, sans-serif',
+        fontWeight: 800, fontSize: Math.round(size * 0.43),
+        flexShrink: 0,
+        boxShadow: `0 0 8px ${color}80`,
+      }}
+    >
+      {name.charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
 export function PlayerGameView() {
+  const { t } = useTranslation();
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const {
-    gameConfig,
-    players,
-    phase,
-    activeQuestion,
-    timer,
-    myWagerSent,
-    myFinalAnswerSent,
-    finalClue,
-    finalMedia,
-    setMyWagerSent,
-    setMyFinalAnswerSent,
-    doublePlayerId,
-    doublePlayerName,
-    doubleWager,
-    challengeState,
-    reset: resetGame,
+    gameConfig, players, phase, activeQuestion, timer,
+    myWagerSent, finalClue, finalMedia,
+    setMyWagerSent, doublePlayerId, doublePlayerName, doubleWager,
+    challengeState, reset: resetGame,
   } = useGameStore();
   const { myId, myName, buzzerPosition, setBuzzerPosition } = usePlayerStore();
   const [wagerAmount, setWagerAmount] = useState('');
   const [wagerAnswer, setWagerAnswer] = useState('');
+  const [wagerStep, setWagerStep] = useState<'bet' | 'answer'>('bet');
   const [doubleWagerInput, setDoubleWagerInput] = useState('');
   const [doubleWagerSent, setDoubleWagerSent] = useState(false);
   const [speedInput, setSpeedInput] = useState('');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUnlocked = useRef(false);
-  // Callback ref que ignora null: evita que a exit animation do AnimatePresence
-  // sobrescreva o ref com null depois do novo elemento já ter sido registrado.
+
   const audioCallbackRef = useCallback((el: HTMLAudioElement | null) => {
     if (el !== null) audioRef.current = el;
   }, []);
-
-  // Callback ref que monta e já chama play() — necessário em mobile onde autoPlay é bloqueado
   const autoPlayCallbackRef = useCallback((el: HTMLAudioElement | null) => {
     if (el !== null) {
       audioRef.current = el;
       el.play().catch(() => {});
     }
   }, []);
+
   useSocketEvents();
 
-  // Desbloqueia autoplay no primeiro gesto do usuário (obrigatório em mobile)
   useEffect(() => {
     function unlock() {
       if (audioUnlocked.current) return;
@@ -82,6 +88,8 @@ export function PlayerGameView() {
   }, []);
 
   const myPlayer = players.find((p) => p.id === myId);
+  const myScore = myPlayer?.score ?? 0;
+  const myColor = myPlayer?.avatarColor ?? '#7c3aed';
 
   function buzz() {
     if (!sessionId || !myId) return;
@@ -96,13 +104,6 @@ export function PlayerGameView() {
     setMyWagerSent();
   }
 
-  function submitFinalAnswer(e: React.FormEvent) {
-    e.preventDefault();
-    if (!sessionId || !myId || !wagerAnswer.trim()) return;
-    socket.emit('player:finalAnswer', { sessionId, playerId: myId, answer: wagerAnswer });
-    setMyFinalAnswerSent();
-  }
-
   function submitDoubleWager(e: React.FormEvent) {
     e.preventDefault();
     if (!sessionId || !myId) return;
@@ -111,564 +112,682 @@ export function PlayerGameView() {
     setDoubleWagerSent(true);
   }
 
-  function submitSpeedAnswer(e: React.FormEvent) {
-    e.preventDefault();
-    if (!sessionId || !speedInput.trim()) return;
-    socket.emit('player:speedAnswer', { sessionId, answer: speedInput.trim() });
-    setSpeedInput(''); // limpar para nova tentativa
-  }
-
   if (!gameConfig) {
+    const myAvatarColor = players.find((p) => p.id === myId)?.avatarColor ?? '#7c3aed';
     return (
-      <div className="fixed inset-0 flex flex-col items-center justify-center p-6 gap-6 overflow-y-auto">
-        <h1 className="text-5xl font-bold text-jeopardy-gold tracking-wider">Responde Aí!</h1>
-        <div className="card text-center max-w-sm w-full">
-          <div className="text-4xl mb-4">⏳</div>
-          <p className="text-lg font-bold mb-1">{myName}</p>
-          <p className="text-slate-400 text-sm">Aguardando o host iniciar o quiz...</p>
-        </div>
-        {players.length > 0 && (
-          <div className="card max-w-sm w-full">
-            <h3 className="text-jeopardy-gold font-bold text-sm uppercase tracking-wider mb-3">
-              Jogadores na sala ({players.length})
-            </h3>
-            <ul className="flex flex-col gap-2">
-              {players.map((p) => (
-                <li key={p.id} className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: p.avatarColor }} />
-                  <span className="text-sm">{p.name}</span>
-                  {p.id === myId && <span className="text-jeopardy-gold text-xs ml-auto">você</span>}
-                </li>
-              ))}
-            </ul>
+      <div style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column', background: '#07060f', position: 'relative', overflow: 'hidden' }}>
+        {/* grid bg */}
+        <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: 'linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+
+        {/* sticky header */}
+        <header style={{ height: 52, display: 'flex', alignItems: 'center', padding: '0 20px', gap: 10, background: 'rgba(13,11,24,0.9)', borderBottom: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 40 }}>
+          <BuzzeLogo size={18} />
+          <div style={{ flex: 1 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 7, padding: '3px 10px' }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3ee67a', boxShadow: '0 0 6px #3ee67a', animation: 'pulse 2s ease-in-out infinite' }} />
+            <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 11, fontWeight: 600, color: '#f0ecff' }}>{t('lobby.live')}</span>
           </div>
-        )}
+        </header>
+
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 24px', gap: 20, position: 'relative', zIndex: 1 }}>
+
+          {/* Player identity card */}
+          <div style={{ borderRadius: 16, padding: 24, textAlign: 'center', background: 'linear-gradient(160deg, #15122a 0%, #0d0b18 100%)', border: '1px solid rgba(124,58,237,0.25)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', maxWidth: 340, width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+              <Avatar name={myName} color={myAvatarColor} size={64} />
+            </div>
+            <p style={{ fontFamily: 'Syne, system-ui, sans-serif', fontWeight: 700, fontSize: 20, color: '#f0ecff', margin: '0 0 4px', letterSpacing: '-0.01em' }}>{myName}</p>
+            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#6b6390', margin: '0 0 20px' }}>
+              {t('player.waiting_host')}
+            </p>
+            {/* room code */}
+            <div style={{ borderRadius: 10, padding: '10px 16px', background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#6b6390' }}>{t('lobby.room_code_label')}</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 22, color: '#c084fc', letterSpacing: '0.12em', textShadow: '0 0 16px rgba(192,132,252,0.5)' }}>{sessionId}</span>
+            </div>
+          </div>
+
+          {/* Players in room */}
+          {players.length > 0 && (
+            <div style={{ borderRadius: 14, background: '#0d0b18', border: '1px solid rgba(255,255,255,0.07)', maxWidth: 340, width: '100%', overflow: 'hidden' }}>
+              <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#6b6390' }}>
+                  {t('player.players_in_room', { count: players.length })}
+                </span>
+              </div>
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                {players.map((p) => (
+                  <li key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <Avatar name={p.name} color={p.avatarColor} size={30} />
+                    <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 14, color: '#f0ecff', flex: 1 }}>{p.name}</span>
+                    {p.id === myId && (
+                      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: '#c084fc' }}>{t('player.you')}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
       </div>
     );
   }
 
   const isDoubleAndNotAssigned = activeQuestion?.question.type === 'double' && doublePlayerId && doublePlayerId !== myId;
-  const isLockedAllPlay = phase === 'all_play' && activeQuestion?.lockedPlayerIds?.includes(myId ?? '');
-  const canBuzz = (phase === 'question' || phase === 'all_play' || phase === 'buzzer_queue') && !buzzerPosition && !isDoubleAndNotAssigned && !isLockedAllPlay;
-
-  // speed_round: meu acerto (se houver)
+  const isQuestionPhase = phase === 'question' || phase === 'all_play' || phase === 'buzzer_queue';
+  const canBuzz = isQuestionPhase && !buzzerPosition && !isDoubleAndNotAssigned;
   const mySpeedEntry = activeQuestion?.speedRoundCorrect?.find((e) => e.playerId === myId);
 
-  return (
-    <div className="fixed inset-0 flex flex-col p-3 gap-2 overflow-hidden">
-      {/* Header com meu score */}
-      <div className="flex items-center justify-between flex-shrink-0">
-        <div>
-          <div className="text-slate-400 text-xs font-ui">{myName}</div>
-          <div
-            className={`text-2xl font-mono font-bold ${(myPlayer?.score ?? 0) < 0 ? 'text-red-400' : 'text-jeopardy-gold'}`}
-            style={(myPlayer?.score ?? 0) >= 0 ? { textShadow: '0 0 16px rgba(232,184,75,0.5)' } : undefined}
-          >
-            ${(myPlayer?.score ?? 0).toLocaleString('pt-BR')}
-          </div>
-        </div>
-        <div className="text-slate-400 text-xs">{gameConfig.name}</div>
-      </div>
+  function submitSpeedAnswer(e: React.FormEvent) {
+    e.preventDefault();
+    if (!speedInput.trim() || !sessionId || !myId) return;
+    socket.emit('player:speedAnswer', { sessionId, answer: speedInput.trim() });
+    setSpeedInput('');
+  }
 
-      {/* Board (somente leitura) */}
-      {(phase === 'board' || phase === 'question' || phase === 'all_play' || phase === 'buzzer_queue') && (
-        <>
-          {/* Scoreboard mobile: faixa horizontal acima do board */}
-          <div className="flex-shrink-0 md:hidden">
-            <Scoreboard players={players} myId={myId ?? undefined} compact />
-          </div>
+  const activeCategory = activeQuestion
+    ? gameConfig.categories.find((c) => c.id === activeQuestion.categoryId)
+    : null;
 
-          <div className="flex flex-1 min-h-0 gap-3">
-            <div className="flex-1 min-w-0 min-h-0">
-              <GameBoard
-                categories={gameConfig.categories}
-                gameId={gameConfig.id}
-                activeQuestionId={activeQuestion?.questionId}
-                fillHeight
-              />
-            </div>
-            {/* Scoreboard desktop: coluna lateral */}
-            <div className="hidden md:block w-48 flex-shrink-0">
-              <Scoreboard players={players} myId={myId ?? undefined} />
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Dupla Aposta */}
-      {phase === 'double_wager' && activeQuestion && (
-        <div className="fixed inset-0 bg-jeopardy-blue flex flex-col items-center justify-center p-4 md:p-6 z-50 gap-4 md:gap-6 overflow-y-auto">
-          <div className="text-5xl md:text-6xl">🎯</div>
-          <h2 className="text-3xl md:text-4xl font-bold text-jeopardy-gold">DUPLA APOSTA!</h2>
-          <p className="text-jeopardy-gold text-xl">${activeQuestion.question.value}</p>
-
-          {doublePlayerId === myId ? (
-            // Sou o jogador atribuído
-            !doubleWagerSent ? (
-              <form onSubmit={submitDoubleWager} className="flex flex-col gap-4 w-full max-w-md">
-                <p className="text-center text-slate-300">Você foi selecionado! Faça sua aposta antes de ver a pergunta.</p>
-                <input
-                  type="number"
-                  min={0}
-                  max={Math.max(myPlayer?.score ?? 0, activeQuestion.question.value)}
-                  value={doubleWagerInput}
-                  onChange={(e) => setDoubleWagerInput(e.target.value)}
-                  className="w-full bg-jeopardy-blue-light border-2 border-jeopardy-gold rounded-lg px-4 py-3 text-jeopardy-gold text-2xl text-center font-bold focus:outline-none"
-                  placeholder="0"
-                  autoFocus
-                />
-                <p className="text-slate-400 text-xs text-center">
-                  Máx: ${Math.max(myPlayer?.score ?? 0, activeQuestion.question.value).toLocaleString('pt-BR')}
-                  {(myPlayer?.score ?? 0) < 0 && (
-                    <span className="text-orange-400 ml-1">(valor da questão — saldo negativo)</span>
-                  )}
-                </p>
-                <button type="submit" className="btn-primary text-xl">Confirmar Aposta</button>
-              </form>
-            ) : (
-              <p className="text-slate-300 animate-pulse">Aposta enviada! Aguardando o host...</p>
-            )
-          ) : doublePlayerId ? (
-            // Outro jogador foi selecionado
-            <div className="text-center text-slate-300">
-              <p className="text-xl font-bold text-white">{doublePlayerName}</p>
-              <p className="text-slate-400 mt-2 animate-pulse">está fazendo sua aposta...</p>
-            </div>
-          ) : (
-            // Aguardando host atribuir
-            <p className="text-slate-400 animate-pulse">Aguardando o host atribuir a um jogador...</p>
-          )}
-        </div>
-      )}
-
-      {/* Questão ativa — overlay para player */}
-      <AnimatePresence>
-        {activeQuestion && (phase === 'question' || phase === 'all_play' || phase === 'buzzer_queue') && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-jeopardy-blue/95 flex flex-col items-center justify-center p-4 md:p-6 z-50 gap-4 md:gap-6 overflow-y-auto"
-          >
-            <div className="text-jeopardy-gold text-xl">
-              ${activeQuestion.question.value}
-              {phase === 'all_play' && !isLockedAllPlay && <span className="ml-3 text-sm bg-yellow-500 text-black px-2 py-0.5 rounded font-bold">TODOS JOGAM</span>}
-              {isLockedAllPlay && <span className="ml-3 text-sm bg-red-600 text-white px-2 py-0.5 rounded font-bold">🚫 BLOQUEADO</span>}
-              {activeQuestion.question.type === 'double' && doubleWager !== null && <span className="ml-3 text-sm bg-purple-500 text-white px-2 py-0.5 rounded font-bold">DUPLA APOSTA ${doubleWager}</span>}
-            </div>
-
-            {/* Notificação de challenge */}
-            {challengeState?.challengedId === myId && (
-              <div className="bg-orange-600 text-white px-4 py-2 rounded-xl font-bold text-lg">
-                ⚔️ Você foi desafiado por {challengeState.challengerName}!
-              </div>
-            )}
-
-            {activeQuestion.question.media && (
-              <img
-                src={`/media/${gameConfig.id}/${activeQuestion.question.media.filename}`}
-                alt=""
-                className="max-h-48 object-contain rounded-xl"
-              />
-            )}
-
-            {activeQuestion.question.clueAudio && (
-              <audio
-                key={activeQuestion.question.clueAudio.filename}
-                ref={autoPlayCallbackRef}
-                src={`/media/${gameConfig.id}/${activeQuestion.question.clueAudio.filename}`}
-              />
-            )}
-
-            <p className="text-xl md:text-3xl font-bold text-center leading-tight max-w-2xl">
-              {activeQuestion.question.clue}
-            </p>
-
-            {timer && (
-              <div className="w-full max-w-md">
-                <QuestionTimer
-                  remainingMs={timer.remainingMs}
-                  totalMs={timer.totalMs}
-                  isPaused={timer.isPaused}
-                />
-              </div>
-            )}
-
-            {/* Tempo esgotado */}
-            {timer?.remainingMs === 0 && !timer.isPaused && (
-              <div
-                className="font-arcade text-2xl tracking-widest animate-pulse"
-                style={{ color: '#ef4444', textShadow: '0 0 20px rgba(239,68,68,0.7)' }}
-              >
-                ⏰ TEMPO ESGOTADO!
-              </div>
-            )}
-
-            {/* Buzzer */}
-            {(phase === 'question' || phase === 'all_play' || phase === 'buzzer_queue') && !isDoubleAndNotAssigned && (
-              <motion.button
-                whileTap={canBuzz ? { y: 4 } : {}}
-                style={{ width: 'min(60vw, 180px)', height: 'min(60vw, 180px)' }}
-                className={`buzz-btn ${
-                  buzzerPosition
-                    ? buzzerPosition === 1 ? 'winner' : 'queued'
-                    : 'available'
-                }`}
-                onClick={canBuzz ? buzz : undefined}
-                disabled={!!buzzerPosition}
-              >
-                {buzzerPosition
-                  ? buzzerPosition === 1 ? 'SUA VEZ!' : `#${buzzerPosition}`
-                  : 'BUZZ!'}
-              </motion.button>
-            )}
-
-            {phase === 'buzzer_queue' && buzzerPosition === 1 && (
-              <div className="text-green-400 text-lg font-arcade animate-pulse tracking-wider">
-                RESPONDA!
-              </div>
-            )}
-          </motion.div>
+  // ── Full-screen overlays for special phases ──────────────────────
+  if (phase === 'speed_round' && activeQuestion) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#07060f', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', gap: 20 }}>
+        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', color: '#3ee67a', textTransform: 'uppercase' }}>⚡ {t('player.speed_round_label')}</div>
+        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 22, color: '#c084fc' }}>${activeQuestion.question.value}</div>
+        {activeQuestion.question.media?.type === 'image' && (
+          <img src={`/media/${gameConfig.id}/${activeQuestion.question.media.filename}`} alt="" style={{ maxHeight: 160, objectFit: 'contain', borderRadius: 12 }} />
         )}
-      </AnimatePresence>
-
-      {/* Revelação da resposta */}
-      {phase === 'answer_reveal' && activeQuestion && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-jeopardy-blue flex flex-col items-center justify-center p-4 md:p-8 z-50 gap-4 md:gap-6 text-center overflow-y-auto"
-        >
-          <div className="text-jeopardy-gold text-xl">${activeQuestion.question.value}</div>
-          {timer?.remainingMs === 0 && (
-            <div
-              className="font-arcade text-xl tracking-widest"
-              style={{ color: '#ef4444', textShadow: '0 0 16px rgba(239,68,68,0.6)' }}
-            >
-              ⏰ TEMPO ESGOTADO!
-            </div>
-          )}
-
-          {/* Clue reference (dimmed) */}
-          {activeQuestion.question.media && (
-            <img
-              src={`/media/${gameConfig.id}/${activeQuestion.question.media.filename}`}
-              alt=""
-              className="max-h-36 object-contain rounded-xl opacity-60"
-            />
-          )}
-          {/* Hidden clue audio for sync — only used when no answerAudio */}
-          {activeQuestion.question.clueAudio && !activeQuestion.question.answerAudio && (
-            <audio
-              key={activeQuestion.question.clueAudio.filename}
-              ref={audioCallbackRef}
-              src={`/media/${gameConfig.id}/${activeQuestion.question.clueAudio.filename}`}
-            />
-          )}
-
-          <p className="text-slate-400 text-lg italic max-w-xl">{activeQuestion.question.clue}</p>
-
-          <div className="border-t border-jeopardy-gold/30 pt-6 w-full max-w-xl">
-            <p className="text-slate-400 text-xs uppercase tracking-widest mb-2">Resposta</p>
-            <p className="text-2xl md:text-4xl font-bold text-jeopardy-gold leading-tight">{activeQuestion.question.answer}</p>
+        <p style={{ fontFamily: 'Syne, system-ui, sans-serif', fontWeight: 700, fontSize: 22, color: '#f0ecff', textAlign: 'center', lineHeight: 1.4, maxWidth: 480 }}>{activeQuestion.question.clue}</p>
+        {timer && <div style={{ width: '100%', maxWidth: 400 }}><QuestionTimer remainingMs={timer.remainingMs} totalMs={timer.totalMs} isPaused={timer.isPaused} /></div>}
+        {(activeQuestion.speedRoundCorrect?.length ?? 0) > 0 && (
+          <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {activeQuestion.speedRoundCorrect!.map((entry) => (
+              <div key={entry.playerId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 10, background: entry.playerId === myId ? 'rgba(62,230,122,0.12)' : 'rgba(255,255,255,0.04)', border: `1px solid ${entry.playerId === myId ? 'rgba(62,230,122,0.25)' : 'rgba(255,255,255,0.07)'}` }}>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#3ee67a', width: 20 }}>#{entry.rank}</span>
+                <span style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, color: '#f0ecff', flex: 1 }}>{entry.playerName}</span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#3ee67a', fontSize: 13 }}>+${entry.scoreChange}</span>
+              </div>
+            ))}
           </div>
-
-          {activeQuestion.question.answerMedia && (
-            <img
-              src={`/media/${gameConfig.id}/${activeQuestion.question.answerMedia.filename}`}
-              alt=""
-              className="max-h-56 object-contain rounded-xl border-2 border-jeopardy-gold/40"
+        )}
+        {mySpeedEntry ? (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 40 }}>✅</div>
+            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#3ee67a', letterSpacing: '0.1em', marginTop: 8 }}>{t('player.speed_round_correct')}</p>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', color: '#6b6390', fontSize: 13, marginTop: 4 }}>#{mySpeedEntry.rank} — +${mySpeedEntry.scoreChange} pts</p>
+          </div>
+        ) : (
+          <form onSubmit={submitSpeedAnswer} style={{ display: 'flex', gap: 8, width: '100%', maxWidth: 400 }}>
+            <input
+              type="text"
+              value={speedInput}
+              onChange={(e) => setSpeedInput(e.target.value)}
+              placeholder={t('player.answer_placeholder')}
+              autoFocus
+              style={{ flex: 1, background: '#0d0b18', border: '1px solid rgba(124,58,237,0.4)', borderRadius: 10, padding: '12px 14px', color: '#f0ecff', fontFamily: 'DM Sans, sans-serif', fontSize: 15, outline: 'none' }}
             />
-          )}
-          {activeQuestion.question.answerAudio && (
-            <audio
-              key={activeQuestion.question.answerAudio.filename}
-              ref={autoPlayCallbackRef}
-              src={`/media/${gameConfig.id}/${activeQuestion.question.answerAudio.filename}`}
-            />
-          )}
+            <button type="submit" className="btn-primary" style={{ whiteSpace: 'nowrap' }}>{t('player.send_answer')}</button>
+          </form>
+        )}
+      </div>
+    );
+  }
 
-          <p className="text-slate-500 text-sm animate-pulse">Aguardando o host continuar...</p>
-        </motion.div>
-      )}
-
-      {/* Rodada Rápida */}
-      {phase === 'speed_round' && activeQuestion && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-jeopardy-blue flex flex-col items-center justify-center p-4 md:p-6 z-50 gap-4 md:gap-6 overflow-y-auto"
+  if (phase === 'double_wager' && activeQuestion) {
+    return (
+      <div style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, gap: 16, background: '#07060f', overflow: 'auto' }}>
+        <div style={{ fontSize: 48, lineHeight: 1 }}>🎯</div>
+        <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 28, color: '#7c3aed', margin: 0 }}>{t('player.double_wager_title')}</h2>
+        <div
+          style={{
+            borderRadius: 14, padding: '12px 16px',
+            background: '#0d0b18', border: '1px solid rgba(255,255,255,0.08)',
+            width: '100%', maxWidth: 360,
+          }}
         >
-          <div className="font-arcade text-base text-green-400 tracking-widest">⚡ RODADA RÁPIDA</div>
-          <div className="text-jeopardy-gold text-xl">${activeQuestion.question.value}</div>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6b6390', letterSpacing: '0.15em', marginBottom: 4 }}>{t('player.value_label')}</div>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 28, fontWeight: 700, color: '#c084fc' }}>${activeQuestion.question.value}</div>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#3a3558', marginTop: 3 }}>
+            máx: ${Math.max(myScore, activeQuestion.question.value).toLocaleString('pt-BR')}
+          </div>
+        </div>
 
-          {activeQuestion.question.media && (
-            <img
-              src={`/media/${gameConfig.id}/${activeQuestion.question.media.filename}`}
-              alt=""
-              className="max-h-40 object-contain rounded-xl"
-            />
-          )}
-
-          <p className="text-xl md:text-3xl font-bold text-center leading-tight max-w-2xl">
-            {activeQuestion.question.clue}
-          </p>
-
-          {timer && (
-            <div className="w-full max-w-md">
-              <QuestionTimer remainingMs={timer.remainingMs} totalMs={timer.totalMs} isPaused={timer.isPaused} />
-            </div>
-          )}
-
-          {/* Feed de acertos ao vivo */}
-          {(activeQuestion.speedRoundCorrect?.length ?? 0) > 0 && (
-            <div className="w-full max-w-md flex flex-col gap-1">
-              {activeQuestion.speedRoundCorrect!.map((entry) => (
-                <div
-                  key={entry.playerId}
-                  className={`flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm ${entry.playerId === myId ? 'bg-green-600/30 border border-green-500/40' : 'bg-slate-800/40'}`}
-                >
-                  <span className="font-mono text-jeopardy-gold font-bold w-5">#{entry.rank}</span>
-                  <span className="font-bold flex-1">{entry.playerName}</span>
-                  <span className="text-green-400 font-mono">+${entry.scoreChange}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Input de resposta */}
-          {mySpeedEntry ? (
-            <div className="flex flex-col items-center gap-2 text-center">
-              <div className="text-4xl">✅</div>
-              <p className="font-arcade text-green-400 tracking-wider">ACERTOU!</p>
-              <p className="text-slate-400 text-sm">#{mySpeedEntry.rank} — +${mySpeedEntry.scoreChange} pts</p>
-            </div>
-          ) : (
-            <form onSubmit={submitSpeedAnswer} className="flex gap-2 w-full max-w-md">
+        {doublePlayerId === myId ? (
+          !doubleWagerSent ? (
+            <form onSubmit={submitDoubleWager} style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 360 }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6b6390', letterSpacing: '0.15em' }}>{t('player.wager_input_label')}</div>
               <input
-                type="text"
-                value={speedInput}
-                onChange={(e) => setSpeedInput(e.target.value)}
-                maxLength={200}
+                type="number" min={0}
+                max={Math.max(myScore, activeQuestion.question.value)}
+                value={doubleWagerInput}
+                onChange={(e) => setDoubleWagerInput(e.target.value)}
+                style={{
+                  background: '#0d0b18', border: '1px solid rgba(192,132,252,0.4)',
+                  borderRadius: 10, padding: '12px 16px',
+                  fontFamily: 'JetBrains Mono, monospace', fontSize: 24, fontWeight: 700,
+                  color: '#c084fc', textAlign: 'center', outline: 'none', width: '100%',
+                  boxSizing: 'border-box',
+                }}
+                placeholder="0"
                 autoFocus
-                className="flex-1 bg-jeopardy-blue-light border-2 border-slate-600 focus:border-jeopardy-gold rounded-lg px-4 py-3 text-white text-lg focus:outline-none transition-colors"
-                placeholder="Digite sua resposta..."
               />
               <button
                 type="submit"
-                disabled={!speedInput.trim()}
-                className="btn-primary px-5 text-lg disabled:opacity-40"
+                style={{
+                  background: 'linear-gradient(180deg, #7c3aed 0%, #5b21b6 100%)',
+                  color: '#fff', border: 'none', borderRadius: 10,
+                  padding: '14px', fontFamily: 'Syne, sans-serif',
+                  fontWeight: 700, fontSize: 15, cursor: 'pointer',
+                }}
               >
-                ↵
-              </button>
-            </form>
-          )}
-        </motion.div>
-      )}
-
-      {/* Desafio Final */}
-      {phase === 'final_challenge' && (
-        <div className="fixed inset-0 bg-jeopardy-blue flex flex-col items-center justify-center p-4 md:p-6 z-50 gap-4 md:gap-6 overflow-y-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-jeopardy-gold">Desafio Final: Aposta</h2>
-          {timer && (
-            <div className="w-full max-w-md">
-              <QuestionTimer remainingMs={timer.remainingMs} totalMs={timer.totalMs} isPaused={timer.isPaused} />
-            </div>
-          )}
-          {finalClue && (
-            <p className="text-2xl font-bold text-center max-w-xl">{finalClue}</p>
-          )}
-          {finalMedia && (
-            finalMedia.type === 'audio' ? (
-              <audio src={`/media/${gameConfig?.id}/${finalMedia.filename}`} autoPlay controls className="w-full max-w-md" />
-            ) : (
-              <img src={`/media/${gameConfig?.id}/${finalMedia.filename}`} alt="" className="max-h-48 object-contain rounded-xl" />
-            )
-          )}
-          {!myWagerSent ? (
-            <form onSubmit={submitWager} className="flex flex-col gap-4 w-full max-w-md">
-              <p className="text-slate-300 text-sm text-center">
-                Defina sua aposta agora. A resposta sera enviada na proxima etapa.
-              </p>
-              <div>
-                <label className="text-slate-300 text-sm mb-1 block">
-                  Quanto você aposta? (máx: ${Math.max(myPlayer?.score ?? 0, 0)})
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={Math.max(myPlayer?.score ?? 0, 0)}
-                  value={wagerAmount}
-                  onChange={(e) => setWagerAmount(e.target.value)}
-                  className="w-full bg-jeopardy-blue-light border-2 border-jeopardy-gold rounded-lg px-4 py-3 text-jeopardy-gold text-2xl text-center font-bold focus:outline-none"
-                  placeholder="0"
-                />
-              </div>
-              <button type="submit" className="btn-primary text-xl">
-                Confirmar Aposta
+                {t('player.confirm_wager')} →
               </button>
             </form>
           ) : (
-            <div
-              className="flex flex-col items-center gap-4 p-8 rounded-2xl text-center max-w-sm w-full"
-              style={{
-                background: 'rgba(232,184,75,0.06)',
-                border: '1px solid rgba(232,184,75,0.2)',
-              }}
-            >
-              <div className="text-4xl animate-bounce">⏳</div>
-              <p className="font-arcade text-lg text-jeopardy-gold tracking-wide">APOSTA ENVIADA!</p>
-              <p className="text-slate-400 font-ui text-sm">Aguarde. A etapa para enviar sua resposta vai abrir em seguida.</p>
-              <div className="flex gap-1.5 mt-1">
-                {[0,1,2].map(i => (
-                  <div
-                    key={i}
-                    className="w-2 h-2 rounded-full bg-jeopardy-gold/40 animate-pulse"
-                    style={{ animationDelay: `${i * 0.2}s` }}
-                  />
-                ))}
-              </div>
+            <div style={{ borderRadius: 14, padding: 20, background: '#0d0b18', border: '1px solid rgba(255,255,255,0.08)', textAlign: 'center', maxWidth: 360, width: '100%' }}>
+              <div style={{ fontSize: 28, marginBottom: 8 }}>⏳</div>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: '0.2em', color: '#c084fc' }}>{t('player.wager_sent_title')}</div>
+              <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, color: '#6b6390', marginTop: 6 }}>{t('player.waiting_host_reveal')}</div>
             </div>
-          )}
-          {timer?.remainingMs === 0 && (
-            <p className="text-slate-400 font-ui text-sm">Tempo encerrado. Aguardando revelacao...</p>
-          )}
-        </div>
-      )}
+          )
+        ) : doublePlayerId ? (
+          <div style={{ textAlign: 'center', color: '#b8b0d8' }}>
+            <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 18, color: '#f0ecff', margin: '0 0 6px' }}>{doublePlayerName}</p>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 13, color: '#6b6390', animation: 'pulse 2s ease-in-out infinite', margin: 0 }}>{t('player.other_wagering')}</p>
+          </div>
+        ) : (
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 13, color: '#6b6390' }}>{t('player.waiting_assign')}</p>
+        )}
+      </div>
+    );
+  }
 
-      {phase === 'final_answer' && (
-        <div className="fixed inset-0 bg-jeopardy-blue flex flex-col items-center justify-center p-4 md:p-6 z-50 gap-4 md:gap-6 overflow-y-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-jeopardy-gold">Desafio Final: Resposta</h2>
-          {timer && (
-            <div className="w-full max-w-md">
-              <QuestionTimer remainingMs={timer.remainingMs} totalMs={timer.totalMs} isPaused={timer.isPaused} />
-            </div>
-          )}
-          {finalClue && (
-            <p className="text-2xl font-bold text-center max-w-xl">{finalClue}</p>
-          )}
-          {finalMedia && (
-            finalMedia.type === 'audio' ? (
-              <audio src={`/media/${gameConfig?.id}/${finalMedia.filename}`} autoPlay controls className="w-full max-w-md" />
-            ) : (
-              <img src={`/media/${gameConfig?.id}/${finalMedia.filename}`} alt="" className="max-h-48 object-contain rounded-xl" />
-            )
-          )}
-          {!myFinalAnswerSent ? (
-            <form onSubmit={submitFinalAnswer} className="flex flex-col gap-4 w-full max-w-md">
-              <p className="text-slate-300 text-sm text-center">
-                Agora envie sua resposta final antes que o tempo acabe.
-              </p>
-              <div>
-                <label className="text-slate-300 text-sm mb-1 block">Sua resposta</label>
-                <input
-                  type="text"
-                  value={wagerAnswer}
-                  onChange={(e) => setWagerAnswer(e.target.value)}
-                  maxLength={500}
-                  className="w-full bg-jeopardy-blue-light border-2 border-slate-500 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-jeopardy-gold"
-                  placeholder="O que e..."
-                />
-              </div>
-              <button type="submit" className="btn-primary text-xl" disabled={!wagerAnswer.trim()}>
-                Enviar Resposta
-              </button>
-            </form>
-          ) : (
-            <div
-              className="flex flex-col items-center gap-4 p-8 rounded-2xl text-center max-w-sm w-full"
-              style={{
-                background: 'rgba(232,184,75,0.06)',
-                border: '1px solid rgba(232,184,75,0.2)',
-              }}
-            >
-              <div className="text-4xl animate-bounce">✍️</div>
-              <p className="font-arcade text-lg text-jeopardy-gold tracking-wide">RESPOSTA ENVIADA!</p>
-              <p className="text-slate-400 font-ui text-sm">Resposta confirmada. Aguarde a revelacao do host.</p>
-            </div>
-          )}
-        </div>
-      )}
+  if (phase === 'final_challenge') {
+    const maxBet = Math.max(myScore, 0);
+    const betAmt = parseInt(wagerAmount) || 0;
+    const betValid = betAmt >= 0 && betAmt <= maxBet;
+    return (
+      <div style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column', background: '#07060f' }}>
 
-      {/* Aguardando revelação do Desafio Final */}
-      {phase === 'final_reveal' && (
-        <div className="fixed inset-0 bg-jeopardy-blue flex flex-col items-center justify-center p-6 z-50 gap-6">
-          <span className="text-5xl animate-bounce">🏆</span>
-          <h2
-            className="font-arcade text-3xl text-jeopardy-gold text-center"
-            style={{ textShadow: '0 0 24px rgba(232,184,75,0.6)' }}
-          >
-            DESAFIO FINAL!
-          </h2>
-          <div
-            className="flex flex-col items-center gap-3 p-6 rounded-2xl text-center max-w-sm w-full"
-            style={{ background: 'rgba(232,184,75,0.06)', border: '1px solid rgba(232,184,75,0.2)' }}
-          >
-            <p className="text-slate-300 font-ui">Aposta enviada!</p>
-            <p className="text-slate-500 font-ui text-sm">O host está revelando os resultados...</p>
-            <div className="flex gap-1.5 mt-2">
-              {[0,1,2].map(i => (
-                <div
-                  key={i}
-                  className="w-2 h-2 rounded-full bg-jeopardy-gold/40 animate-pulse"
-                  style={{ animationDelay: `${i * 0.2}s` }}
-                />
-              ))}
+        {/* Header — identical to question view */}
+        <header style={{ height: 52, display: 'flex', alignItems: 'center', padding: '0 20px', gap: 10, background: 'rgba(13,11,24,0.9)', borderBottom: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 40, flexShrink: 0 }}>
+          <BuzzeLogo size={18} />
+          <div style={{ flex: 1 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '3px 10px' }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3ee67a', boxShadow: '0 0 6px #3ee67a', animation: 'pulse 2s ease-in-out infinite' }} />
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, fontWeight: 700, color: '#f0ecff', letterSpacing: '0.12em' }}>{t('lobby.live')}</span>
+          </div>
+        </header>
+
+        {/* Body — same padding/gap as question view */}
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '10px 16px 28px', gap: 10 }}>
+
+          {/* Score card — identical to question view */}
+          <div style={{ borderRadius: 12, padding: '10px 14px', background: '#0d0b18', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Avatar name={myName} color={myColor} size={34} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#f0ecff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{myName}</div>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6b6390', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{gameConfig.name}</div>
+            </div>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 20, fontWeight: 700, color: myScore < 0 ? '#ff4d6d' : '#c084fc', textShadow: myScore >= 0 ? '0 0 12px rgba(192,132,252,0.5)' : undefined }}>
+              {myScore < 0 ? '-' : ''}${Math.abs(myScore).toLocaleString('pt-BR')}
             </div>
           </div>
+
+          {/* Clue card — same style as question clue card */}
+          <div style={{ borderRadius: 12, padding: 14, background: '#0d0b18', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#c084fc', letterSpacing: '0.15em', marginBottom: 8, textTransform: 'uppercase' }}>
+              ◆ {t('player.final_title')} · {wagerStep === 'bet' ? t('player.confirm_wager') : t('player.your_answer')}
+            </div>
+            {finalMedia && (
+              finalMedia.type === 'audio'
+                ? <audio src={`/media/${gameConfig.id}/${finalMedia.filename}`} autoPlay controls style={{ width: '100%', marginBottom: 8 }} />
+                : <img src={`/media/${gameConfig.id}/${finalMedia.filename}`} alt="" style={{ width: '100%', maxHeight: 'clamp(200px, 45vh, 560px)', objectFit: 'contain', borderRadius: 10, marginBottom: 8 }} />
+            )}
+            {finalClue && (
+              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 17, lineHeight: 1.3, color: '#f0ecff' }}>
+                {finalClue}
+              </div>
+            )}
+          </div>
+
+          {/* Interaction area */}
+          {!myWagerSent ? (
+            wagerStep === 'bet' ? (
+              /* Step 1 — wager */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ borderRadius: 12, padding: 14, background: '#0d0b18', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6b6390', letterSpacing: '0.15em', marginBottom: 10, textTransform: 'uppercase' }}>
+                    {t('player.confirm_wager')} · <span style={{ color: '#c084fc' }}>{t('player.max_wager', { value: maxBet.toLocaleString('en-US') })}</span>
+                  </div>
+                  <input
+                    type="number" min={0} max={maxBet}
+                    value={wagerAmount} onChange={(e) => setWagerAmount(e.target.value)}
+                    style={{ width: '100%', boxSizing: 'border-box', background: '#15122a', border: `1px solid ${!betValid && wagerAmount !== '' ? 'rgba(255,77,109,0.5)' : 'rgba(192,132,252,0.3)'}`, borderRadius: 10, padding: '12px 14px', fontFamily: 'JetBrains Mono, monospace', fontSize: 26, fontWeight: 700, color: '#c084fc', textAlign: 'center', outline: 'none', caretColor: '#c084fc' }}
+                    placeholder="0"
+                  />
+                  {!betValid && wagerAmount !== '' && (
+                    <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 11, color: '#ff4d6d', margin: '6px 0 0', textAlign: 'center' }}>{t('player.max_wager', { value: maxBet.toLocaleString('en-US') })}</p>
+                  )}
+                </div>
+                <button onClick={() => setWagerStep('answer')} disabled={!betValid} className="btn-primary" style={{ padding: '14px', fontSize: 15, opacity: betValid ? 1 : 0.4 }}>
+                  {t('player.confirm_wager')} →
+                </button>
+              </div>
+            ) : (
+              /* Step 2 — answer */
+              <form onSubmit={submitWager} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ borderRadius: 12, padding: 14, background: '#0d0b18', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6b6390', letterSpacing: '0.15em', textTransform: 'uppercase' }}>{t('player.your_answer')}</div>
+                    <button type="button" onClick={() => setWagerStep('bet')} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6b6390', background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, padding: '3px 8px', cursor: 'pointer' }}>
+                      ← ${betAmt.toLocaleString('en-US')}
+                    </button>
+                  </div>
+                  <input
+                    type="text" value={wagerAnswer} onChange={(e) => setWagerAnswer(e.target.value)}
+                    maxLength={500} placeholder={t('player.answer_placeholder')} autoFocus
+                    style={{ width: '100%', boxSizing: 'border-box', background: '#15122a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '12px 14px', fontFamily: 'DM Sans, sans-serif', fontSize: 16, color: '#f0ecff', outline: 'none', caretColor: '#c084fc' }}
+                  />
+                </div>
+                <button type="submit" disabled={!wagerAnswer.trim()} className="btn-primary" style={{ padding: '14px', fontSize: 15, opacity: wagerAnswer.trim() ? 1 : 0.4 }}>
+                  {t('player.send_answer')} →
+                </button>
+              </form>
+            )
+          ) : (
+            /* Sent */
+            <div style={{ borderRadius: 12, padding: 14, background: '#0d0b18', border: '1px solid rgba(255,255,255,0.08)', textAlign: 'center' }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#3ee67a', letterSpacing: '0.18em', marginBottom: 6 }}>{t('player.wager_sent')}</div>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#3a3558', letterSpacing: '0.14em', animation: 'pulse 2s ease-in-out infinite' }}>{t('player.waiting_host_reveal')}</div>
+            </div>
+          )}
         </div>
-      )}
+        <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
+      </div>
+    );
+  }
 
-      {/* Game Over */}
-      {phase === 'game_over' && (
-        <div className="fixed inset-0 bg-jeopardy-blue flex flex-col items-center justify-center p-4 md:p-6 z-50 gap-4 md:gap-6 overflow-y-auto">
-          <h2
-            className="font-arcade text-4xl md:text-5xl text-jeopardy-gold mb-2 md:mb-4"
-            style={{ textShadow: '0 0 30px rgba(232,184,75,0.7), 0 0 60px rgba(232,184,75,0.3)' }}
+  if (phase === 'final_reveal') {
+    return (
+      <div style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column', background: '#07060f' }}>
+        <header style={{ height: 52, display: 'flex', alignItems: 'center', padding: '0 20px', gap: 10, background: 'rgba(13,11,24,0.9)', borderBottom: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 40, flexShrink: 0 }}>
+          <BuzzeLogo size={18} />
+          <div style={{ flex: 1 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '3px 10px' }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3ee67a', boxShadow: '0 0 6px #3ee67a', animation: 'pulse 2s ease-in-out infinite' }} />
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, fontWeight: 700, color: '#f0ecff', letterSpacing: '0.12em' }}>{t('lobby.live')}</span>
+          </div>
+        </header>
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '10px 16px 28px', gap: 10 }}>
+          <div style={{ borderRadius: 12, padding: 14, background: '#0d0b18', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#c084fc', letterSpacing: '0.15em', marginBottom: 8, textTransform: 'uppercase' }}>◆ {t('player.final_reveal_title')}</div>
+            {finalClue && <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 17, lineHeight: 1.3, color: '#f0ecff' }}>{finalClue}</div>}
+          </div>
+          <div style={{ borderRadius: 12, padding: 14, background: '#0d0b18', border: '1px solid rgba(255,255,255,0.08)', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#3a3558', letterSpacing: '0.14em', animation: 'pulse 2s ease-in-out infinite' }}>{t('player.host_revealing')}</div>
+          </div>
+        </div>
+        <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
+      </div>
+    );
+  }
+
+  if (phase === 'game_over') {
+    return (
+      <div style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, gap: 14, background: '#07060f', overflow: 'auto' }}>
+        <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 32, color: '#c084fc', textShadow: '0 0 30px rgba(192,132,252,0.6)', margin: 0, letterSpacing: '-0.03em' }}>
+          {t('player.game_over')}
+        </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: 380 }}>
+          {[...players].sort((a, b) => b.score - a.score).map((p, i) => {
+            const medals = ['🥇', '🥈', '🥉'];
+            const isFirst = i === 0;
+            return (
+              <motion.div
+                key={p.id}
+                initial={{ opacity: 0, x: -24 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.1 }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '11px 14px', borderRadius: 10,
+                  background: isFirst ? 'rgba(124,58,237,0.12)' : '#0d0b18',
+                  border: isFirst ? '1px solid rgba(192,132,252,0.4)' : '1px solid rgba(255,255,255,0.06)',
+                  boxShadow: isFirst ? '0 0 20px -8px rgba(192,132,252,0.5)' : 'none',
+                }}
+              >
+                <span style={{ fontSize: 18, width: 26, textAlign: 'center' }}>{medals[i] ?? `#${i + 1}`}</span>
+                <Avatar name={p.name} color={p.avatarColor} size={30} />
+                <span style={{ flex: 1, fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: isFirst ? '#c084fc' : '#b8b0d8' }}>{p.name}</span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 13, color: p.score < 0 ? '#ff4d6d' : isFirst ? '#c084fc' : '#f0ecff' }}>
+                  {p.score < 0 ? '-' : ''}${Math.abs(p.score).toLocaleString('pt-BR')}
+                </span>
+              </motion.div>
+            );
+          })}
+        </div>
+        <button
+          style={{
+            marginTop: 8, background: 'transparent',
+            border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8,
+            padding: '10px 20px', fontFamily: 'DM Sans, sans-serif',
+            fontSize: 13, fontWeight: 600, color: '#b8b0d8', cursor: 'pointer',
+          }}
+          onClick={() => { socket.disconnect(); resetGame(); setBuzzerPosition(null); navigate('/'); }}
+        >
+          {t('player.back_menu')}
+        </button>
+      </div>
+    );
+  }
+
+  // ── Main scrollable layout ───────────────────────────────────────
+  return (
+    <div style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column', background: '#07060f' }}>
+
+      {/* Header */}
+      <div
+        style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '10px 18px', flexShrink: 0,
+          background: 'rgba(13,11,24,0.9)',
+          borderBottom: '1px solid rgba(255,255,255,0.07)',
+          backdropFilter: 'blur(12px)',
+          position: 'sticky', top: 0, zIndex: 40,
+        }}
+      >
+        <BuzzeLogo size={18} />
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <div
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 6, padding: '3px 8px',
+            }}
           >
-            FIM DE JOGO!
-          </h2>
-          <div className="flex flex-col gap-2 w-full max-w-md">
-            {[...players]
-              .sort((a, b) => b.score - a.score)
-              .map((p, i) => {
-                const rankConfig = [
-                  { medal: '🥇', border: '#E8B84B', bg: 'rgba(232,184,75,0.15)', glow: '0 0 20px rgba(232,184,75,0.4)', textClass: 'text-jeopardy-gold', size: 'text-xl' },
-                  { medal: '🥈', border: '#94a3b8', bg: 'rgba(148,163,184,0.1)', glow: 'none', textClass: 'text-slate-300', size: 'text-lg' },
-                  { medal: '🥉', border: '#f97316', bg: 'rgba(249,115,22,0.1)', glow: 'none', textClass: 'text-orange-400', size: 'text-base' },
-                ][i] ?? { medal: `#${i+1}`, border: '#334155', bg: 'rgba(51,65,85,0.4)', glow: 'none', textClass: 'text-slate-400', size: 'text-base' };
+            <div
+              style={{
+                width: 6, height: 6, borderRadius: '50%', background: '#3ee67a',
+                boxShadow: '0 0 6px #3ee67a', animation: 'pulse 2s ease-in-out infinite',
+              }}
+            />
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, fontWeight: 700, color: '#f0ecff', letterSpacing: '0.12em' }}>
+              {t('lobby.live')}
+            </span>
+          </div>
+        </div>
+      </div>
 
-                return (
-                  <motion.div
-                    key={p.id}
-                    initial={{ opacity: 0, x: -30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.12 }}
-                    className={`flex items-center gap-3 p-3 rounded-xl ${i === 0 ? 'animate-winner-shimmer' : ''}`}
+      {/* Scrollable body */}
+      <div
+        style={{
+          flex: 1, overflowY: 'auto',
+          display: 'flex', flexDirection: 'column',
+          padding: '10px 16px 28px', gap: 10,
+        }}
+      >
+
+        {/* Score card */}
+        <div
+          style={{
+            borderRadius: 12, padding: '10px 14px',
+            background: '#0d0b18', border: '1px solid rgba(255,255,255,0.08)',
+            display: 'flex', alignItems: 'center', gap: 10,
+          }}
+        >
+          <Avatar name={myName} color={myColor} size={34} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#f0ecff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {myName}
+            </div>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6b6390', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              {gameConfig.name}
+            </div>
+          </div>
+          <div
+            style={{
+              fontFamily: 'JetBrains Mono, monospace', fontSize: 20, fontWeight: 700,
+              color: myScore < 0 ? '#ff4d6d' : '#c084fc',
+              textShadow: myScore >= 0 ? '0 0 12px rgba(192,132,252,0.5)' : undefined,
+            }}
+          >
+            {myScore < 0 ? '-' : ''}${Math.abs(myScore).toLocaleString('pt-BR')}
+          </div>
+        </div>
+
+        {/* ── BOARD (idle) ── */}
+        {(phase === 'board') && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#3a3558', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+              {t('player.board_readonly')}
+            </div>
+            <GameBoard
+              categories={gameConfig.categories}
+              gameId={gameConfig.id}
+              activeQuestionId={activeQuestion?.questionId}
+            />
+            <div
+              style={{
+                borderRadius: 10, padding: 12,
+                background: '#0d0b18', border: '1px solid rgba(255,255,255,0.06)',
+                textAlign: 'center',
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace', fontSize: 10,
+                  color: '#3a3558', letterSpacing: '0.18em',
+                  animation: 'pulse 2s ease-in-out infinite',
+                }}
+              >
+                {t('player.waiting_next_question')}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── QUESTION PHASES (buzzer) ── */}
+        {isQuestionPhase && activeQuestion && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
+
+            {/* Challenge notification */}
+            {challengeState?.challengedId === myId && (
+              <div style={{ borderRadius: 10, padding: '10px 14px', background: 'rgba(255,200,87,0.12)', border: '1px solid rgba(255,200,87,0.3)', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#ffc857' }}>
+                {t('player.challenged_by', { name: challengeState.challengerName })}
+              </div>
+            )}
+
+            {/* Clue card */}
+            <div
+              style={{
+                borderRadius: 12, padding: 14,
+                background: '#0d0b18', border: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#c084fc', letterSpacing: '0.15em', marginBottom: 6, textTransform: 'uppercase' }}>
+                {activeCategory?.name} · ${activeQuestion.question.value}
+                {phase === 'all_play' && <span style={{ marginLeft: 8, color: '#ffc857' }}>· {t('player.all_play')}</span>}
+              </div>
+
+              {activeQuestion.question.media && (
+                <img
+                  src={`/media/${gameConfig.id}/${activeQuestion.question.media.filename}`}
+                  alt=""
+                  style={{ maxHeight: 'clamp(200px, 45vh, 560px)', objectFit: 'contain', borderRadius: 10, marginBottom: 8, width: '100%' }}
+                />
+              )}
+
+              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 17, lineHeight: 1.3, color: '#f0ecff' }}>
+                {activeQuestion.question.clue}
+              </div>
+
+              {/* Audio sync indicator */}
+              {activeQuestion.question.clueAudio && (
+                <>
+                  <audio
+                    key={activeQuestion.question.clueAudio.filename}
+                    ref={autoPlayCallbackRef}
+                    src={`/media/${gameConfig.id}/${activeQuestion.question.clueAudio.filename}`}
+                  />
+                  <div
                     style={{
-                      borderLeft: `4px solid ${rankConfig.border}`,
-                      background: rankConfig.bg,
-                      boxShadow: rankConfig.glow,
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      marginTop: 10, padding: '7px 10px', borderRadius: 8,
+                      background: 'rgba(124,58,237,0.1)',
+                      border: '1px solid rgba(124,58,237,0.25)',
                     }}
                   >
-                    <span className="text-xl w-8 text-center">{rankConfig.medal}</span>
-                    <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: p.avatarColor }} />
-                    <span className={`flex-1 font-ui font-bold ${rankConfig.textClass} ${rankConfig.size}`}>{p.name}</span>
-                    <span className={`font-mono font-bold ${rankConfig.textClass}`}>
-                      ${p.score.toLocaleString('pt-BR')}
-                    </span>
-                  </motion.div>
-                );
-              })}
+                    <div style={{ width: 26, height: 26, borderRadius: '50%', background: '#7c3aed', display: 'grid', placeItems: 'center', fontSize: 10, flexShrink: 0, color: '#fff' }}>▶</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.1)' }}>
+                        <div style={{ width: '42%', height: '100%', background: '#7c3aed', borderRadius: 2 }} />
+                      </div>
+                      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: '#6b6390', marginTop: 2 }}>{t('player.audio_sync')}</div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Buzzer button */}
+            <div style={{ flex: 1, display: 'grid', placeItems: 'center', minHeight: 200, padding: '16px 0' }}>
+              {!isDoubleAndNotAssigned && (
+                <motion.button
+                  whileTap={canBuzz ? { y: 6 } : {}}
+                  onClick={canBuzz ? buzz : undefined}
+                  disabled={!!buzzerPosition}
+                  style={{
+                    width: 'min(60vw, 190px)', height: 'min(60vw, 190px)',
+                    borderRadius: '50%', border: 'none', cursor: canBuzz ? 'pointer' : 'default',
+                    fontFamily: 'Syne, sans-serif', fontWeight: 800,
+                    fontSize: 'clamp(18px, 5vw, 28px)', letterSpacing: '0.06em',
+                    color: '#fff',
+                    background: buzzerPosition === 1
+                      ? 'radial-gradient(circle at 35% 25%, color-mix(in oklab, #3ee67a 90%, white), #3ee67a 55%, color-mix(in oklab, #3ee67a 55%, black))'
+                      : buzzerPosition
+                        ? 'radial-gradient(circle at 35% 25%, #1e1a38, #15122a)'
+                        : 'radial-gradient(circle at 35% 25%, color-mix(in oklab, #7c3aed 90%, white), #7c3aed 55%, color-mix(in oklab, #7c3aed 55%, black))',
+                    boxShadow: buzzerPosition === 1
+                      ? '0 14px 0 color-mix(in oklab, #3ee67a 45%, black), 0 20px 60px -10px #3ee67a, inset 0 2px 0 rgba(255,255,255,0.3)'
+                      : buzzerPosition
+                        ? '0 6px 0 rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.05)'
+                        : '0 14px 0 color-mix(in oklab, #7c3aed 45%, black), 0 20px 60px -10px #7c3aed, inset 0 2px 0 rgba(255,255,255,0.3)',
+                  }}
+                >
+                  {buzzerPosition === 1
+                    ? t('player.your_turn')
+                    : buzzerPosition
+                      ? `#${buzzerPosition}`
+                      : t('player.buzz')}
+                </motion.button>
+              )}
+            </div>
+
+            {/* Status bar */}
+            <div
+              style={{
+                borderRadius: 10, padding: '10px 14px',
+                background: '#0d0b18', border: '1px solid rgba(255,255,255,0.06)',
+                textAlign: 'center',
+              }}
+            >
+              {!buzzerPosition && (
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#c084fc', letterSpacing: '0.18em', animation: 'pulse 2s ease-in-out infinite' }}>
+                  {t('player.buzzer_open')}
+                </div>
+              )}
+              {buzzerPosition && buzzerPosition > 1 && (
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#b8b0d8', letterSpacing: '0.14em' }}>
+                  {t('player.buzzer_position', { pos: buzzerPosition })}
+                </div>
+              )}
+              {buzzerPosition === 1 && (
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#3ee67a', letterSpacing: '0.18em' }}>
+                  {t('player.your_turn')} — {t('player.respond')}
+                </div>
+              )}
+            </div>
           </div>
-          <button
-            className="btn-ghost mt-4"
-            onClick={() => { socket.disconnect(); resetGame(); setBuzzerPosition(null); navigate('/'); }}
-          >
-            ← Voltar ao Menu
-          </button>
-        </div>
-      )}
+        )}
+
+        {/* ── ANSWER REVEAL ── */}
+        {phase === 'answer_reveal' && activeQuestion && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
+
+            {/* Clue + audio indicator */}
+            <div style={{ borderRadius: 12, padding: 14, background: '#0d0b18', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#6b6390', letterSpacing: '0.15em', marginBottom: 6, textTransform: 'uppercase' }}>
+                {t('player.clue_label')} · {activeCategory?.name} · ${activeQuestion.question.value}
+              </div>
+              <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 14, color: '#b8b0d8', fontStyle: 'italic', lineHeight: 1.4 }}>
+                {activeQuestion.question.clue}
+              </div>
+              {/* Answer audio indicator */}
+              {(activeQuestion.question.answerAudio || activeQuestion.question.clueAudio) && (
+                <>
+                  {activeQuestion.question.clueAudio && !activeQuestion.question.answerAudio && (
+                    <audio key={activeQuestion.question.clueAudio.filename} ref={audioCallbackRef} src={`/media/${gameConfig.id}/${activeQuestion.question.clueAudio.filename}`} />
+                  )}
+                  {activeQuestion.question.answerAudio && (
+                    <audio key={activeQuestion.question.answerAudio.filename} ref={autoPlayCallbackRef} src={`/media/${gameConfig.id}/${activeQuestion.question.answerAudio.filename}`} />
+                  )}
+                  <div
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      marginTop: 10, padding: '7px 10px', borderRadius: 8,
+                      background: 'rgba(62,230,122,0.08)',
+                      border: '1px solid rgba(62,230,122,0.25)',
+                    }}
+                  >
+                    <div style={{ width: 26, height: 26, borderRadius: '50%', background: '#3ee67a', color: '#041a14', display: 'grid', placeItems: 'center', fontSize: 10, flexShrink: 0 }}>▶</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.1)' }}>
+                        <div style={{ width: '58%', height: '100%', background: '#3ee67a', borderRadius: 2 }} />
+                      </div>
+                      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: '#6b6390', marginTop: 2 }}>{t('player.audio_answer')}</div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Answer card */}
+            <div
+              style={{
+                borderRadius: 12, padding: 16,
+                background: 'color-mix(in oklab, #3ee67a 8%, #0d0b18)',
+                border: '1px solid #3ee67a',
+              }}
+            >
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, letterSpacing: '0.2em', color: '#3ee67a', marginBottom: 6 }}>{t('player.correct_answer')}</div>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 20, color: '#f0ecff', lineHeight: 1.2 }}>
+                {activeQuestion.question.answer}
+              </div>
+            </div>
+
+            {/* Answer media */}
+            {activeQuestion.question.answerMedia && (
+              <img
+                src={`/media/${gameConfig.id}/${activeQuestion.question.answerMedia.filename}`}
+                alt=""
+                style={{ maxHeight: 'clamp(220px, 48vh, 600px)', objectFit: 'contain', borderRadius: 12, border: '1px solid rgba(62,230,122,0.3)', width: '100%' }}
+              />
+            )}
+
+            {/* Waiting */}
+            <div style={{ borderRadius: 10, padding: 10, background: '#0d0b18', border: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#3a3558', letterSpacing: '0.14em' }}>
+                {t('player.waiting_host_continue')}
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }

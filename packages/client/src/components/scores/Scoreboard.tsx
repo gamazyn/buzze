@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Player } from '@responde-ai/shared';
+import { useTranslation } from 'react-i18next';
+import type { Player } from '@buzze/shared';
 
 interface Props {
   players: Player[];
@@ -8,12 +9,32 @@ interface Props {
 }
 
 const RANK_STYLES = [
-  { border: '#E8B84B', bg: 'rgba(232,184,75,0.08)', glow: '0 0 12px rgba(232,184,75,0.3)' },  // 1st gold
-  { border: '#94a3b8', bg: 'rgba(148,163,184,0.06)', glow: 'none' },                           // 2nd silver
-  { border: '#f97316', bg: 'rgba(249,115,22,0.06)', glow: 'none' },                            // 3rd coral
+  { border: '#c084fc', bg: 'rgba(192,132,252,0.08)', glow: '0 0 12px rgba(192,132,252,0.3)' },
+  { border: '#94a3b8', bg: 'rgba(148,163,184,0.06)', glow: 'none' },
+  { border: '#f97316', bg: 'rgba(249,115,22,0.06)', glow: 'none' },
 ];
 
+function PlayerAvatar({ name, color, size = 28 }: { name: string; color: string; size?: number }) {
+  return (
+    <div
+      className="flex-shrink-0 flex items-center justify-center rounded-full font-display font-bold"
+      style={{
+        width: size,
+        height: size,
+        background: color,
+        color: '#07060f',
+        fontSize: Math.round(size * 0.43),
+        lineHeight: 1,
+        boxShadow: `0 0 8px ${color}55`,
+      }}
+    >
+      {name.charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
 export function Scoreboard({ players, myId, compact = false }: Props) {
+  const { t } = useTranslation();
   const sorted = [...players].sort((a, b) => b.score - a.score);
 
   if (compact) {
@@ -27,20 +48,20 @@ export function Scoreboard({ players, myId, compact = false }: Props) {
               layout
               className="flex-shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-lg min-w-[72px]"
               style={{
-                borderLeft: `3px solid ${rank?.border ?? '#334155'}`,
-                background: rank?.bg ?? 'rgba(51,65,85,0.4)',
-                boxShadow: player.id === myId ? '0 0 0 1px rgba(232,184,75,0.5)' : 'none',
+                borderLeft: `3px solid ${rank?.border ?? '#3a3558'}`,
+                background: rank?.bg ?? 'rgba(58,53,88,0.4)',
+                boxShadow: player.id === myId ? '0 0 0 1px rgba(192,132,252,0.5)' : 'none',
               }}
             >
-              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: player.avatarColor }} />
-              <span className={`text-xs truncate max-w-[64px] font-ui ${!player.isConnected ? 'opacity-50' : ''}`}>
+              <PlayerAvatar name={player.name} color={player.avatarColor} size={22} />
+              <span className={`text-xs truncate max-w-[64px] font-body ${!player.isConnected ? 'opacity-50' : ''}`}>
                 {player.name}
               </span>
               <motion.span
                 key={player.score}
                 animate={{ scale: [1, 1.3, 1] }}
                 transition={{ duration: 0.3 }}
-                className={`font-mono font-bold text-xs ${player.score < 0 ? 'text-red-400' : 'text-jeopardy-gold'}`}
+                className={`font-mono font-bold text-xs ${player.score < 0 ? 'text-buzze-danger' : 'text-buzze-fuchsia'}`}
               >
                 ${player.score.toLocaleString('pt-BR')}
               </motion.span>
@@ -53,8 +74,8 @@ export function Scoreboard({ players, myId, compact = false }: Props) {
 
   return (
     <div className="flex flex-col gap-1">
-      <h3 className="text-jeopardy-gold font-arcade text-xs uppercase tracking-widest mb-2">
-        Placar
+      <h3 className="text-buzze-fuchsia font-display text-xs uppercase tracking-widest mb-2">
+        {t('scoreboard.title')}
       </h3>
       <AnimatePresence>
         {sorted.map((player, i) => {
@@ -68,26 +89,23 @@ export function Scoreboard({ players, myId, compact = false }: Props) {
               animate={{ opacity: 1, x: 0 }}
               className={`flex items-center gap-2 py-2 px-3 rounded-lg ${!player.isConnected ? 'opacity-60' : ''}`}
               style={{
-                borderLeft: `3px solid ${rank?.border ?? '#334155'}`,
-                background: rank?.bg ?? 'rgba(51,65,85,0.4)',
+                borderLeft: `3px solid ${rank?.border ?? '#3a3558'}`,
+                background: rank?.bg ?? 'rgba(58,53,88,0.4)',
                 boxShadow: isMe
-                  ? `0 0 0 1px rgba(232,184,75,0.5), ${rank?.glow ?? 'none'}`
+                  ? `0 0 0 1px rgba(192,132,252,0.5), ${rank?.glow ?? 'none'}`
                   : rank?.glow ?? 'none',
               }}
             >
-              <div
-                className="w-3 h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: player.avatarColor }}
-              />
-              <span className="flex-1 text-sm truncate font-ui">
+              <PlayerAvatar name={player.name} color={player.avatarColor} size={28} />
+              <span className="flex-1 text-sm truncate font-body">
                 {player.name}
-                {isMe && <span className="text-jeopardy-gold text-xs ml-1 opacity-70">●</span>}
+                {isMe && <span className="text-buzze-fuchsia text-xs ml-1 opacity-70">●</span>}
               </span>
               <motion.span
                 key={player.score}
                 animate={{ scale: [1, 1.3, 1] }}
                 transition={{ duration: 0.3 }}
-                className={`font-mono font-bold text-sm ${player.score < 0 ? 'text-red-400' : 'text-jeopardy-gold'}`}
+                className={`font-mono font-bold text-sm ${player.score < 0 ? 'text-buzze-danger' : 'text-buzze-fuchsia'}`}
               >
                 ${player.score.toLocaleString('pt-BR')}
               </motion.span>

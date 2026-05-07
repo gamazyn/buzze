@@ -1,5 +1,5 @@
 {
-  "name": "@responde-ai/client",
+  "name": "@buzze/client",
   "version": "1.0.2",
   "private": true,
   "type": "module",
@@ -14,11 +14,14 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@responde-ai/shared": "workspace:*",
+    "@buzze/shared": "workspace:*",
     "framer-motion": "^11.18.2",
+    "i18next": "^26.0.8",
+    "i18next-browser-languagedetector": "^8.2.1",
     "qrcode.react": "^4.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-i18next": "^17.0.6",
     "react-router-dom": "^7.3.0",
     "socket.io-client": "^4.8.1",
     "zustand": "^5.0.3"

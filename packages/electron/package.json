@@ -1,5 +1,5 @@
 {
-  "name": "@responde-ai/electron",
+  "name": "@buzze/electron",
   "version": "1.0.2",
   "private": true,
   "type": "module",
@@ -20,8 +20,8 @@
     "electron-updater": "^6.3.0"
   },
   "devDependencies": {
-    "@responde-ai/client": "workspace:*",
-    "@responde-ai/server": "workspace:*",
+    "@buzze/client": "workspace:*",
+    "@buzze/server": "workspace:*",
     "@types/node": "^22.0.0",
     "@vitest/coverage-v8": "^4.1.4",
     "esbuild": "^0.25.0",

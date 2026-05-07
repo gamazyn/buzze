@@ -5,7 +5,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 export { startTunnel } from './tunnel.js';
 import { resolve } from 'path';
-import type { ServerToClientEvents, ClientToServerEvents } from '@responde-ai/shared';
+import type { ServerToClientEvents, ClientToServerEvents } from '@buzze/shared';
 import { PORT, CLIENT_URL, GAMES_DIR, NODE_ENV } from './config.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 import { gameRouter } from './routes/gameRoutes.js';

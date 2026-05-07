@@ -20,7 +20,7 @@
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"]
     },
-    "@responde-ai/electron#test": {
+    "@buzze/electron#test": {
       "dependsOn": ["^build"],
       "outputs": []
     },

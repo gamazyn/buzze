@@ -75,16 +75,20 @@ async function startProductionServer(): Promise<number> {
 }
 
 async function createWindow(): Promise<void> {
+  // Expõe o locale do sistema para o renderer detectar via navigator.language override
+  const systemLocale = app.getLocale()
+
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
     minWidth: 800,
     minHeight: 600,
-    title: 'Responde Aí!',
+    title: 'buzze.io',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
+      additionalArguments: [`--app-locale=${systemLocale}`],
     },
   })
 

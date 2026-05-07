@@ -6,7 +6,7 @@ import type {
   ActiveQuestion,
   BuzzerEntry,
   ChallengeState,
-} from '@responde-ai/shared';
+} from '@buzze/shared';
 
 interface TimerState {
   remainingMs: number;

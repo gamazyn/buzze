@@ -1,4 +1,4 @@
-import type { GameSession, GameConfig, Player } from '@responde-ai/shared';
+import type { GameSession, GameConfig, Player } from '@buzze/shared';
 import { createSession, deleteSession } from '../../managers/sessionManager.js';
 
 export const TEST_SESSION_ID = 'TEST01';
