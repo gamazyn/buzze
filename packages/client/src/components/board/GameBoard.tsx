@@ -46,7 +46,7 @@ export function GameBoard({ categories, gameId, onSelectQuestion, activeQuestion
       {categories.map((cat) => (
         <div
           key={cat.id}
-          className={`flex items-center justify-center text-center p-1 md:p-3 overflow-hidden ${fillHeight ? '' : 'min-h-[80px]'}`}
+          className={`flex items-center justify-center text-center p-1 md:p-3 overflow-hidden ${fillHeight ? '' : 'min-h-[50px] max-h-[80px]'}`}
           style={{
             background: 'linear-gradient(180deg, #15122a 0%, #0d0b18 100%)',
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -2px 0 rgba(0,0,0,0.5)',
@@ -75,7 +75,7 @@ export function GameBoard({ categories, gameId, onSelectQuestion, activeQuestion
                 key={q.id}
                 whileHover={!q.used ? { scale: 1.03 } : {}}
                 whileTap={!q.used ? { scale: 0.97 } : {}}
-                className={`question-cell relative ${fillHeight ? '' : 'aspect-[4/3]'} ${q.used ? 'used' : ''} ${
+                className={`question-cell relative ${fillHeight ? '' : 'min-h-[60px] max-h-[110px]'} ${q.used ? 'used' : ''} ${
                   isActive ? 'ring-2 ring-buzze-violet' : ''
                 }`}
                 onClick={() => {
