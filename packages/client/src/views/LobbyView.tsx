@@ -5,29 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { socket } from '../socket.js';
 import { useGameStore } from '../store/gameStore.js';
 import { useSocketEvents } from '../hooks/useSocketEvents.js';
+import { useHostActions } from '../hooks/useHostActions.js';
 import { BuzzeLogo } from '../components/ui/BuzzeLogo.js';
+import { PlayerAvatar } from '../components/ui/PlayerAvatar.js';
 import type { GameConfig } from '@buzze/shared';
 
 const MAX_LOBBY_SLOTS = 8;
-
-/* ─── Avatar ──────────────────────────────────────────────── */
-function Avatar({ name, color }: { name: string; color: string }) {
-  return (
-    <div
-      style={{
-        width: 36, height: 36, borderRadius: '50%',
-        background: color,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: 'Syne, system-ui, sans-serif',
-        fontWeight: 800, fontSize: 14, color: '#fff',
-        flexShrink: 0,
-        boxShadow: `0 0 8px ${color}80`,
-      }}
-    >
-      {name[0]?.toUpperCase()}
-    </div>
-  );
-}
 
 /* ─── CopyButton ──────────────────────────────────────────── */
 function CopyButton({ text, label, labelDone }: { text: string; label: string; labelDone: string }) {
@@ -64,6 +47,7 @@ export function LobbyView() {
   const { players, phase, hostToken, tunnelUrl, localUrl, isHost } = useGameStore();
   const [gameConfig, setGameConfig] = useState<Omit<GameConfig, 'finalChallengeAnswer'> | null>(null);
   useSocketEvents();
+  const hostActions = useHostActions({ sessionId: sessionId ?? '', hostToken: hostToken ?? '' });
 
   useEffect(() => {
     if (state?.gameId) {
@@ -82,7 +66,7 @@ export function LobbyView() {
 
   function handleStart() {
     if (!sessionId || !hostToken) return;
-    socket.emit('host:start', { sessionId, hostToken });
+    hostActions.start();
   }
 
   function handleLeave() {
@@ -425,7 +409,7 @@ export function LobbyView() {
                   borderBottom: '1px solid rgba(255,255,255,0.04)',
                 }}
               >
-                <Avatar name={p.name} color={p.avatarColor} />
+                <PlayerAvatar name={p.name} color={p.avatarColor} size={36} textColor="#fff" />
                 <span style={{
                   fontFamily: 'DM Sans, sans-serif', fontWeight: 500,
                   fontSize: 15, color: '#f0ecff', flex: 1,

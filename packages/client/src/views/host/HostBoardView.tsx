@@ -5,136 +5,15 @@ import { useTranslation } from 'react-i18next';
 import { socket } from '../../socket.js';
 import { useGameStore } from '../../store/gameStore.js';
 import { useSocketEvents } from '../../hooks/useSocketEvents.js';
+import { useHostActions } from '../../hooks/useHostActions.js';
 import { GameBoard } from '../../components/board/GameBoard.js';
 import { Scoreboard } from '../../components/scores/Scoreboard.js';
 import { ConfirmModal } from '../../components/ui/ConfirmModal.js';
 import { BuzzeLogo } from '../../components/ui/BuzzeLogo.js';
 import { QuestionTimer } from '../../components/question/QuestionTimer.js';
-
-// ─── Timer circle ────────────────────────────────────────────────────────────
-function TimerCircle({ remainingMs, totalMs, isPaused }: { remainingMs: number; totalMs: number; isPaused: boolean }) {
-  const r = 28;
-  const circ = 2 * Math.PI * r;
-  const frac = totalMs > 0 ? Math.max(0, remainingMs / totalMs) : 0;
-  const offset = circ * (1 - frac);
-  const secs = Math.ceil(remainingMs / 1000);
-  const color = isPaused ? '#6b6390' : frac > 0.4 ? '#c084fc' : frac > 0.2 ? '#ffc857' : '#ff4d6d';
-  return (
-    <div className="flex flex-col items-center gap-1 flex-shrink-0">
-      <span className="font-mono text-[9px] uppercase tracking-widest" style={{ color: '#6b6390' }}>TIMER</span>
-      <svg width={72} height={72} viewBox="0 0 72 72">
-        <circle cx={36} cy={36} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={4} />
-        <circle
-          cx={36} cy={36} r={r} fill="none"
-          stroke={color} strokeWidth={4}
-          strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          transform="rotate(-90 36 36)"
-          style={{ transition: isPaused ? 'none' : 'stroke-dashoffset 0.5s linear, stroke 0.3s' }}
-        />
-        <text x={36} y={41} textAnchor="middle" fill={color}
-          style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 18, fontWeight: 700 }}>
-          {secs}
-        </text>
-      </svg>
-    </div>
-  );
-}
-
-// ─── Custom Audio Player ──────────────────────────────────────────────────────
-function AudioPlayer({
-  src, audioRef, onPlay, onPause, onSeeked,
-}: {
-  src: string;
-  audioRef: (el: HTMLAudioElement | null) => void;
-  onPlay: () => void;
-  onPause: () => void;
-  onSeeked: () => void;
-}) {
-  const elRef = useRef<HTMLAudioElement | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const [current, setCurrent] = useState(0);
-  const [duration, setDuration] = useState(0);
-
-  const combinedRef = useCallback((el: HTMLAudioElement | null) => {
-    elRef.current = el;
-    audioRef(el);
-  }, [audioRef]);
-
-  function fmt(s: number) {
-    const m = Math.floor(s / 60);
-    const sec = Math.floor(s % 60);
-    return `${m}:${sec.toString().padStart(2, '0')}`;
-  }
-
-  const progress = duration > 0 ? (current / duration) * 100 : 0;
-
-  return (
-    <div
-      className="w-full rounded-xl px-4 py-3 flex items-center gap-3"
-      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
-    >
-      <audio
-        ref={combinedRef}
-        src={src}
-        onPlay={() => { setPlaying(true); onPlay(); }}
-        onPause={() => { setPlaying(false); onPause(); }}
-        onSeeked={onSeeked}
-        onTimeUpdate={(e) => setCurrent((e.target as HTMLAudioElement).currentTime)}
-        onLoadedMetadata={(e) => setDuration((e.target as HTMLAudioElement).duration)}
-      />
-      {/* Play/Pause */}
-      <button
-        className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all"
-        style={{ background: 'rgba(124,58,237,0.8)' }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#7c3aed'; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(124,58,237,0.8)'; }}
-        onClick={() => { elRef.current?.paused ? elRef.current.play() : elRef.current?.pause(); }}
-      >
-        {playing
-          ? <span style={{ color: '#fff', fontSize: 12 }}>❚❚</span>
-          : <span style={{ color: '#fff', fontSize: 13, paddingLeft: 2 }}>▶</span>}
-      </button>
-
-      <div className="flex-1 flex flex-col gap-1.5 min-w-0">
-        {/* Labels */}
-        <div className="flex items-center justify-between">
-          <span className="font-mono text-[9px] uppercase tracking-widest" style={{ color: '#6b6390' }}>ÁUDIO DA DICA</span>
-          <span className="font-mono text-[9px] uppercase tracking-widest" style={{ color: '#3a3558' }}>HOST SYNC</span>
-        </div>
-        {/* Progress bar */}
-        <div
-          className="relative w-full h-1 rounded-full cursor-pointer"
-          style={{ background: 'rgba(255,255,255,0.1)' }}
-          onClick={(e) => {
-            if (!elRef.current || !duration) return;
-            const rect = e.currentTarget.getBoundingClientRect();
-            elRef.current.currentTime = ((e.clientX - rect.left) / rect.width) * duration;
-          }}
-        >
-          <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${progress}%`, background: '#7c3aed' }} />
-        </div>
-        {/* Time */}
-        <span className="font-mono text-[10px]" style={{ color: '#6b6390' }}>
-          {fmt(current)} / {fmt(duration)}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// ─── Player Avatar (small) ────────────────────────────────────────────────────
-function Avatar({ name, color, size = 32 }: { name: string; color: string; size?: number }) {
-  return (
-    <div
-      className="flex-shrink-0 flex items-center justify-center rounded-full font-display font-bold"
-      style={{ width: size, height: size, background: color, color: '#07060f', fontSize: Math.round(size * 0.43), lineHeight: 1, boxShadow: `0 0 8px ${color}55` }}
-    >
-      {name.charAt(0).toUpperCase()}
-    </div>
-  );
-}
+import { TimerCircle } from '../../components/question/TimerCircle.js';
+import { SyncedAudioPlayer } from '../../components/media/SyncedAudioPlayer.js';
+import { PlayerAvatar as Avatar } from '../../components/ui/PlayerAvatar.js';
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function HostBoardView() {
@@ -149,6 +28,7 @@ export function HostBoardView() {
     reset: resetGame,
   } = useGameStore();
   useSocketEvents();
+  const hostActions = useHostActions({ sessionId: sessionId ?? '', hostToken: hostToken ?? '' });
 
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
@@ -161,7 +41,7 @@ export function HostBoardView() {
 
   function emitAudio(action: 'play' | 'pause' | 'seek') {
     if (!audioRef.current || !sessionId || !hostToken) return;
-    socket.emit('host:audioControl', { sessionId, hostToken, action, currentTime: audioRef.current.currentTime });
+    hostActions.audioControl(action, audioRef.current.currentTime);
   }
 
   if (!gameConfig || !sessionId || !hostToken) return null;
@@ -176,38 +56,34 @@ export function HostBoardView() {
   const allWagered = totalWagered >= totalPlayers && totalPlayers > 0;
 
   function selectQuestion(categoryId: string, questionId: string) {
-    socket.emit('host:selectQuestion', { sessionId: sessionId!, hostToken: hostToken!, categoryId, questionId });
+    hostActions.selectQuestion(categoryId, questionId);
   }
   function judge(playerId: string, correct: boolean) {
-    socket.emit('host:judge', { sessionId: sessionId!, hostToken: hostToken!, playerId, correct });
+    hostActions.judge(playerId, correct);
   }
   function skipPlayer(playerId: string) {
-    socket.emit('host:skipPlayer', { sessionId: sessionId!, hostToken: hostToken!, playerId });
+    hostActions.skipPlayer(playerId);
   }
   function clearQuestion() {
-    if (autoReveal) {
-      socket.emit('host:clearQuestion', { sessionId: sessionId!, hostToken: hostToken! });
-    } else {
-      socket.emit('host:clearQuestionNoReveal', { sessionId: sessionId!, hostToken: hostToken! });
-    }
+    hostActions.clearQuestion(autoReveal);
   }
   function timerControl(action: 'pause' | 'resume' | 'extend' | 'set', seconds?: number) {
-    socket.emit('host:timerControl', { sessionId: sessionId!, hostToken: hostToken!, action, seconds });
+    hostActions.timerControl(action, seconds);
   }
   function continueBoard() {
-    socket.emit('host:continueBoard', { sessionId: sessionId!, hostToken: hostToken! });
+    hostActions.continueBoard();
   }
   function assignDouble(playerId: string) {
-    socket.emit('host:assignDouble', { sessionId: sessionId!, hostToken: hostToken!, playerId });
+    hostActions.assignDouble(playerId);
   }
   function setChallenge(challengedId: string) {
-    socket.emit('host:setChallenge', { sessionId: sessionId!, hostToken: hostToken!, challengedId });
+    hostActions.setChallenge(challengedId);
   }
   function revealFinal(playerId: string, isCorrect: boolean) {
-    socket.emit('host:revealFinal', { sessionId: sessionId!, hostToken: hostToken!, playerId, isCorrect });
+    hostActions.revealFinal(playerId, isCorrect);
   }
   function confirmEndGame() {
-    socket.emit('host:endGame', { sessionId: sessionId!, hostToken: hostToken! });
+    hostActions.endGame();
     setShowEndConfirm(false);
   }
 
@@ -260,7 +136,7 @@ export function HostBoardView() {
                 style={{ border: '1px solid rgba(255,200,87,0.5)', color: '#ffc857', background: 'rgba(255,200,87,0.08)' }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,200,87,0.18)'; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,200,87,0.08)'; }}
-                onClick={() => socket.emit('host:startFinal', { sessionId: sessionId!, hostToken: hostToken! })}
+                onClick={hostActions.startFinal}
               >
                 {t('host_board.final_challenge')}
               </button>
@@ -363,7 +239,7 @@ export function HostBoardView() {
               {/* Audio player — clue (hidden during answer reveal) */}
               {activeQuestion.question.clueAudio && phase !== 'answer_reveal' && (
                 <div className="mt-6 w-full max-w-lg z-10">
-                  <AudioPlayer
+                  <SyncedAudioPlayer
                     src={`/media/${gameConfig.id}/${activeQuestion.question.clueAudio.filename}`}
                     audioRef={audioCallbackRef}
                     onPlay={() => emitAudio('play')}
@@ -418,7 +294,7 @@ export function HostBoardView() {
               {/* Answer audio */}
               {phase === 'answer_reveal' && activeQuestion.question.answerAudio && (
                 <div className="mt-4 w-full max-w-lg z-10">
-                  <AudioPlayer
+                  <SyncedAudioPlayer
                     src={`/media/${gameConfig.id}/${activeQuestion.question.answerAudio.filename}`}
                     audioRef={audioCallbackRef}
                     onPlay={() => emitAudio('play')}
@@ -879,11 +755,7 @@ export function HostBoardView() {
                         padding: '8px 16px', color: '#6b6390', fontSize: 12,
                         fontFamily: 'DM Sans, sans-serif', cursor: 'pointer',
                       }}
-                      onClick={() => socket.emit('host:revealFinal', {
-                        sessionId: sessionId!, hostToken: hostToken!,
-                        playerId: wagersSubmitted.find((w) => hostWagers[w.playerId])?.playerId ?? '',
-                        isCorrect: false,
-                      })}
+                      onClick={() => revealFinal(wagersSubmitted.find((w) => hostWagers[w.playerId])?.playerId ?? '', false)}
                     >
                       {t('host_board.reveal_anyway', { count: totalWagered, total: totalPlayers })}
                     </button>

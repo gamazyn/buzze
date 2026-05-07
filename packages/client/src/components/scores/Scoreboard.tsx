@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import type { Player } from '@buzze/shared';
+import { PlayerAvatar } from '../ui/PlayerAvatar.js';
 
 interface Props {
   players: Player[];
@@ -13,25 +14,6 @@ const RANK_STYLES = [
   { border: '#94a3b8', bg: 'rgba(148,163,184,0.06)', glow: 'none' },
   { border: '#f97316', bg: 'rgba(249,115,22,0.06)', glow: 'none' },
 ];
-
-function PlayerAvatar({ name, color, size = 28 }: { name: string; color: string; size?: number }) {
-  return (
-    <div
-      className="flex-shrink-0 flex items-center justify-center rounded-full font-display font-bold"
-      style={{
-        width: size,
-        height: size,
-        background: color,
-        color: '#07060f',
-        fontSize: Math.round(size * 0.43),
-        lineHeight: 1,
-        boxShadow: `0 0 8px ${color}55`,
-      }}
-    >
-      {name.charAt(0).toUpperCase()}
-    </div>
-  );
-}
 
 export function Scoreboard({ players, myId, compact = false }: Props) {
   const { t } = useTranslation();

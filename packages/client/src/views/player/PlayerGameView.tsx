@@ -5,28 +5,12 @@ import { socket } from '../../socket.js';
 import { useGameStore } from '../../store/gameStore.js';
 import { usePlayerStore } from '../../store/playerStore.js';
 import { useSocketEvents } from '../../hooks/useSocketEvents.js';
+import { usePlayerActions } from '../../hooks/usePlayerActions.js';
 import { GameBoard } from '../../components/board/GameBoard.js';
 import { BuzzeLogo } from '../../components/ui/BuzzeLogo.js';
 import { useTranslation } from 'react-i18next';
 import { QuestionTimer } from '../../components/question/QuestionTimer.js';
-
-function Avatar({ name, color, size = 32 }: { name: string; color: string; size?: number }) {
-  return (
-    <div
-      style={{
-        width: size, height: size, borderRadius: '50%',
-        background: color, color: '#07060f',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: 'Syne, system-ui, sans-serif',
-        fontWeight: 800, fontSize: Math.round(size * 0.43),
-        flexShrink: 0,
-        boxShadow: `0 0 8px ${color}80`,
-      }}
-    >
-      {name.charAt(0).toUpperCase()}
-    </div>
-  );
-}
+import { PlayerAvatar as Avatar } from '../../components/ui/PlayerAvatar.js';
 
 export function PlayerGameView() {
   const { t } = useTranslation();
@@ -39,6 +23,7 @@ export function PlayerGameView() {
     challengeState, reset: resetGame,
   } = useGameStore();
   const { myId, myName, buzzerPosition, setBuzzerPosition } = usePlayerStore();
+  const playerActions = usePlayerActions({ sessionId: sessionId ?? '', playerId: myId ?? '' });
   const [wagerAmount, setWagerAmount] = useState('');
   const [wagerAnswer, setWagerAnswer] = useState('');
   const [wagerStep, setWagerStep] = useState<'bet' | 'answer'>('bet');
@@ -93,14 +78,14 @@ export function PlayerGameView() {
 
   function buzz() {
     if (!sessionId || !myId) return;
-    socket.emit('player:buzz', { sessionId, playerId: myId });
+    playerActions.buzz();
   }
 
   function submitWager(e: React.FormEvent) {
     e.preventDefault();
     if (!sessionId || !myId) return;
     const amount = Math.max(0, parseInt(wagerAmount) || 0);
-    socket.emit('player:finalWager', { sessionId, playerId: myId, amount });
+    playerActions.submitFinalWager(amount);
     setMyWagerSent();
   }
 
@@ -108,7 +93,7 @@ export function PlayerGameView() {
     e.preventDefault();
     if (!sessionId || !myId) return;
     const amount = Math.max(0, parseInt(doubleWagerInput) || 0);
-    socket.emit('player:doubleWager', { sessionId, playerId: myId, amount });
+    playerActions.submitDoubleWager(amount);
     setDoubleWagerSent(true);
   }
 
@@ -183,7 +168,7 @@ export function PlayerGameView() {
   function submitSpeedAnswer(e: React.FormEvent) {
     e.preventDefault();
     if (!speedInput.trim() || !sessionId || !myId) return;
-    socket.emit('player:speedAnswer', { sessionId, answer: speedInput.trim() });
+    playerActions.submitSpeedAnswer(speedInput.trim());
     setSpeedInput('');
   }
 

@@ -1,28 +1,11 @@
 import type { Server, Socket } from 'socket.io';
 import type { ServerToClientEvents, ClientToServerEvents, GameConfig } from '@buzze/shared';
 import { getSession, updateSession } from '../managers/sessionManager.js';
-import { validateHostToken } from '../middleware/authMiddleware.js';
 import { canTransition, allQuestionsUsed } from '../managers/gameStateManager.js';
 import { emitFinalChallengeStart } from './finalHandler.js';
 import { startTimer, stopTimer, pauseTimer, resumeTimer, extendTimer, setTimer } from '../managers/timerManager.js';
 import { DEFAULT_TIMER_MS } from '../config.js';
-
-function requireHost(
-  socket: Socket,
-  sessionId: string,
-  hostToken: string,
-): ReturnType<typeof getSession> | null {
-  const session = getSession(sessionId);
-  if (!session) {
-    socket.emit('error', { code: 'SESSION_NOT_FOUND', message: 'Sessão não encontrada.' });
-    return null;
-  }
-  if (session.hostId !== socket.id || !validateHostToken(session.hostToken, hostToken)) {
-    socket.emit('error', { code: 'NOT_HOST', message: 'Ação não permitida.' });
-    return null;
-  }
-  return session;
-}
+import { requireHost } from './requireHost.js';
 
 export function registerGameHandlers(
   io: Server<ClientToServerEvents, ServerToClientEvents>,
