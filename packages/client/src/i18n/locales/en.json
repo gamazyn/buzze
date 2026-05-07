@@ -157,6 +157,8 @@
     "back_menu": "← Back to Menu",
     "answer_reveal_label": "Answer",
     "wager_input_label": "YOUR WAGER",
+    "speed_round_label": "SPEED ROUND",
+    "speed_round_correct": "CORRECT!",
     "waiting_next_question": "WAITING FOR NEXT QUESTION",
     "buzzer_open": "▸ BUZZER OPEN ▸",
     "buzzer_position": "POSITION #{{pos}} · WAITING…",

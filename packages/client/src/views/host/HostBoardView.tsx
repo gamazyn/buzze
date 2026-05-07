@@ -646,29 +646,41 @@ export function HostBoardView() {
         {activeQuestion && phase === 'speed_round' && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-buzze-bg/97 backdrop-blur-sm flex items-center justify-center p-8 z-50"
+            style={{ position: 'fixed', inset: 0, background: 'rgba(7,6,15,0.97)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32, zIndex: 50 }}
           >
-            <div className="max-w-2xl w-full text-center flex flex-col items-center gap-6">
-              <div className="font-mono text-xs font-bold tracking-widest text-emerald-400 uppercase">⚡ {t('host_board.type_speed_round')}</div>
-              <div className="font-mono text-buzze-fuchsia text-xl">${activeQuestion.question.value}</div>
+            <div style={{ maxWidth: 720, width: '100%', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', color: '#3ee67a', textTransform: 'uppercase' }}>
+                ⚡ {t('host_board.type_speed_round')}
+              </div>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 22, color: '#c084fc' }}>
+                ${activeQuestion.question.value}
+              </div>
               {activeQuestion.question.media?.type === 'image' && (
-                <img src={`/media/${gameConfig.id}/${activeQuestion.question.media.filename}`} alt="" className="max-h-48 object-contain rounded-xl" />
+                <img src={`/media/${gameConfig.id}/${activeQuestion.question.media.filename}`} alt="" style={{ maxHeight: 200, objectFit: 'contain', borderRadius: 14 }} />
               )}
-              <p className="text-3xl font-bold leading-tight">{activeQuestion.question.clue}</p>
-              <p className="text-slate-400 italic text-sm">{activeQuestion.question.answer}</p>
+              <p style={{ fontFamily: 'Syne, system-ui, sans-serif', fontWeight: 800, fontSize: 'clamp(22px, 3vw, 36px)', color: '#f0ecff', lineHeight: 1.3, margin: 0 }}>
+                {activeQuestion.question.clue}
+              </p>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 13, color: '#6b6390', fontStyle: 'italic', margin: 0 }}>
+                {t('host_board.answer_label')}: {activeQuestion.question.answer}
+              </p>
               {(activeQuestion.speedRoundCorrect?.length ?? 0) > 0 && (
-                <div className="w-full max-w-md flex flex-col gap-2 text-left">
+                <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 6, textAlign: 'left' }}>
                   {activeQuestion.speedRoundCorrect!.map((entry) => (
-                    <div key={entry.playerId} className="flex items-center gap-3 px-3 py-1.5 rounded-lg" style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)' }}>
-                      <span className="font-mono text-emerald-400 font-bold w-5">#{entry.rank}</span>
-                      <span className="font-bold flex-1 text-white">{entry.playerName}</span>
-                      <span className="text-emerald-400 font-mono text-sm">+${entry.scoreChange}</span>
+                    <div key={entry.playerId} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 14px', borderRadius: 10, background: 'rgba(62,230,122,0.08)', border: '1px solid rgba(62,230,122,0.2)' }}>
+                      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#3ee67a', width: 22, fontSize: 12 }}>#{entry.rank}</span>
+                      <span style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, color: '#f0ecff', flex: 1 }}>{entry.playerName}</span>
+                      <span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#3ee67a', fontSize: 13 }}>+${entry.scoreChange}</span>
                     </div>
                   ))}
                 </div>
               )}
-              {timer && <div className="w-full max-w-md"><QuestionTimer remainingMs={timer.remainingMs} totalMs={timer.totalMs} isPaused={timer.isPaused} /></div>}
-              <div className="flex gap-3">
+              {timer && (
+                <div style={{ width: '100%', maxWidth: 480 }}>
+                  <QuestionTimer remainingMs={timer.remainingMs} totalMs={timer.totalMs} isPaused={timer.isPaused} />
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 10 }}>
                 {timer?.isPaused
                   ? <button className="btn-ghost" onClick={() => timerControl('resume')}>{t('host_board.resume')}</button>
                   : <button className="btn-ghost" onClick={() => timerControl('pause')}>{t('host_board.pause')}</button>

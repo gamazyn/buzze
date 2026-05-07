@@ -195,7 +195,7 @@ export function PlayerGameView() {
   if (phase === 'speed_round' && activeQuestion) {
     return (
       <div style={{ minHeight: '100vh', background: '#07060f', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', gap: 20 }}>
-        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', color: '#4ade80', textTransform: 'uppercase' }}>⚡ {t('host_board.type_speed_round')}</div>
+        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', color: '#3ee67a', textTransform: 'uppercase' }}>⚡ {t('player.speed_round_label')}</div>
         <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 22, color: '#c084fc' }}>${activeQuestion.question.value}</div>
         {activeQuestion.question.media?.type === 'image' && (
           <img src={`/media/${gameConfig.id}/${activeQuestion.question.media.filename}`} alt="" style={{ maxHeight: 160, objectFit: 'contain', borderRadius: 12 }} />
@@ -205,10 +205,10 @@ export function PlayerGameView() {
         {(activeQuestion.speedRoundCorrect?.length ?? 0) > 0 && (
           <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 6 }}>
             {activeQuestion.speedRoundCorrect!.map((entry) => (
-              <div key={entry.playerId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 10, background: entry.playerId === myId ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.04)', border: `1px solid ${entry.playerId === myId ? 'rgba(74,222,128,0.3)' : 'rgba(255,255,255,0.07)'}` }}>
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#4ade80', width: 20 }}>#{entry.rank}</span>
+              <div key={entry.playerId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 10, background: entry.playerId === myId ? 'rgba(62,230,122,0.12)' : 'rgba(255,255,255,0.04)', border: `1px solid ${entry.playerId === myId ? 'rgba(62,230,122,0.25)' : 'rgba(255,255,255,0.07)'}` }}>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#3ee67a', width: 20 }}>#{entry.rank}</span>
                 <span style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, color: '#f0ecff', flex: 1 }}>{entry.playerName}</span>
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#4ade80', fontSize: 13 }}>+${entry.scoreChange}</span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#3ee67a', fontSize: 13 }}>+${entry.scoreChange}</span>
               </div>
             ))}
           </div>
@@ -216,7 +216,7 @@ export function PlayerGameView() {
         {mySpeedEntry ? (
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 40 }}>✅</div>
-            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#4ade80', letterSpacing: '0.1em', marginTop: 8 }}>ACERTOU!</p>
+            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#3ee67a', letterSpacing: '0.1em', marginTop: 8 }}>{t('player.speed_round_correct')}</p>
             <p style={{ fontFamily: 'DM Sans, sans-serif', color: '#6b6390', fontSize: 13, marginTop: 4 }}>#{mySpeedEntry.rank} — +${mySpeedEntry.scoreChange} pts</p>
           </div>
         ) : (
