@@ -9,6 +9,7 @@ import { GameBoard } from '../../components/board/GameBoard.js';
 import { Scoreboard } from '../../components/scores/Scoreboard.js';
 import { ConfirmModal } from '../../components/ui/ConfirmModal.js';
 import { BuzzeLogo } from '../../components/ui/BuzzeLogo.js';
+import { QuestionTimer } from '../../components/question/QuestionTimer.js';
 
 // ─── Timer circle ────────────────────────────────────────────────────────────
 function TimerCircle({ remainingMs, totalMs, isPaused }: { remainingMs: number; totalMs: number; isPaused: boolean }) {

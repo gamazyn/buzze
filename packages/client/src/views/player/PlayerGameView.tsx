@@ -8,6 +8,7 @@ import { useSocketEvents } from '../../hooks/useSocketEvents.js';
 import { GameBoard } from '../../components/board/GameBoard.js';
 import { BuzzeLogo } from '../../components/ui/BuzzeLogo.js';
 import { useTranslation } from 'react-i18next';
+import { QuestionTimer } from '../../components/question/QuestionTimer.js';
 
 function Avatar({ name, color, size = 32 }: { name: string; color: string; size?: number }) {
   return (
@@ -99,7 +100,7 @@ export function PlayerGameView() {
     e.preventDefault();
     if (!sessionId || !myId) return;
     const amount = Math.max(0, parseInt(wagerAmount) || 0);
-    socket.emit('player:finalWager', { sessionId, playerId: myId, amount, answer: wagerAnswer });
+    socket.emit('player:finalWager', { sessionId, playerId: myId, amount });
     setMyWagerSent();
   }
 
@@ -182,7 +183,7 @@ export function PlayerGameView() {
   function submitSpeedAnswer(e: React.FormEvent) {
     e.preventDefault();
     if (!speedInput.trim() || !sessionId || !myId) return;
-    socket.emit('player:speed_answer', { sessionId, playerId: myId, answer: speedInput.trim() });
+    socket.emit('player:speedAnswer', { sessionId, answer: speedInput.trim() });
     setSpeedInput('');
   }
 
