@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow, shell, dialog, Menu } from 'electron'
 import { initUpdater } from './updater.js'
 import { createServer as createNetServer } from 'net'
 import { networkInterfaces } from 'os'
@@ -47,20 +47,30 @@ async function startProductionServer(): Promise<number> {
     ? path.join(process.resourcesPath, 'server-bundle.mjs')
     : path.join(__dirname, '../resources/server-bundle.mjs')
 
-  const { createApp } = (await import(pathToFileURL(serverBundlePath).href)) as {
+  const { createApp, startTunnel } = (await import(pathToFileURL(serverBundlePath).href)) as {
     createApp: () => {
       httpServer: import('http').Server
       setLocalUrl: (url: string) => void
       setTunnelUrl: (url: string) => void
     }
+    startTunnel: (port: number) => Promise<string | null>
   }
 
-  const { httpServer, setLocalUrl } = createApp()
+  const { httpServer, setLocalUrl, setTunnelUrl } = createApp()
 
   const localIp = getLocalIp()
   if (localIp) setLocalUrl(`http://${localIp}:${port}`)
 
-  await new Promise<void>((resolve) => httpServer.listen(port, resolve))
+  await new Promise<void>((resolve, reject) => {
+    httpServer.listen(port, resolve)
+    httpServer.once('error', reject)
+  })
+
+  // Inicia tunnel em background — não bloqueia abertura da janela
+  startTunnel(port).then((tunnelUrl) => {
+    if (tunnelUrl) setTunnelUrl(tunnelUrl)
+  }).catch(() => { /* tunnel opcional, falha silenciosa */ })
+
   return port
 }
 
@@ -96,7 +106,11 @@ async function createWindow(): Promise<void> {
 }
 
 app.whenReady().then(() => {
-  createWindow()
+  Menu.setApplicationMenu(null)
+  createWindow().catch((err: Error) => {
+    dialog.showErrorBox('Falha ao iniciar', err.message)
+    app.quit()
+  })
   initUpdater()
 })
 

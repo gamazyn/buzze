@@ -120,7 +120,8 @@
     "leave": "Leave",
     "type_all_play": "ALL",
     "type_challenge": "CHALLENGE",
-    "type_double": "DOUBLE"
+    "type_double": "DOUBLE",
+    "type_speed_round": "SPEED"
   },
   "player": {
     "waiting_host": "Waiting for the host to start the quiz...",
@@ -187,6 +188,7 @@
     "type_all_play": "All Play",
     "type_double": "Double Wager",
     "type_challenge": "Challenge a Player",
+    "type_speed_round": "Speed Round",
     "image_upload": "image",
     "audio_upload": "audio",
     "change": "Change",

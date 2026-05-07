@@ -43,6 +43,7 @@ export function PlayerGameView() {
   const [wagerStep, setWagerStep] = useState<'bet' | 'answer'>('bet');
   const [doubleWagerInput, setDoubleWagerInput] = useState('');
   const [doubleWagerSent, setDoubleWagerSent] = useState(false);
+  const [speedInput, setSpeedInput] = useState('');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUnlocked = useRef(false);
 
@@ -176,12 +177,64 @@ export function PlayerGameView() {
   const isDoubleAndNotAssigned = activeQuestion?.question.type === 'double' && doublePlayerId && doublePlayerId !== myId;
   const isQuestionPhase = phase === 'question' || phase === 'all_play' || phase === 'buzzer_queue';
   const canBuzz = isQuestionPhase && !buzzerPosition && !isDoubleAndNotAssigned;
+  const mySpeedEntry = activeQuestion?.speedRoundCorrect?.find((e) => e.playerId === myId);
+
+  function submitSpeedAnswer(e: React.FormEvent) {
+    e.preventDefault();
+    if (!speedInput.trim() || !sessionId || !myId) return;
+    socket.emit('player:speed_answer', { sessionId, playerId: myId, answer: speedInput.trim() });
+    setSpeedInput('');
+  }
 
   const activeCategory = activeQuestion
     ? gameConfig.categories.find((c) => c.id === activeQuestion.categoryId)
     : null;
 
   // ── Full-screen overlays for special phases ──────────────────────
+  if (phase === 'speed_round' && activeQuestion) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#07060f', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', gap: 20 }}>
+        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', color: '#4ade80', textTransform: 'uppercase' }}>⚡ {t('host_board.type_speed_round')}</div>
+        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 22, color: '#c084fc' }}>${activeQuestion.question.value}</div>
+        {activeQuestion.question.media?.type === 'image' && (
+          <img src={`/media/${gameConfig.id}/${activeQuestion.question.media.filename}`} alt="" style={{ maxHeight: 160, objectFit: 'contain', borderRadius: 12 }} />
+        )}
+        <p style={{ fontFamily: 'Syne, system-ui, sans-serif', fontWeight: 700, fontSize: 22, color: '#f0ecff', textAlign: 'center', lineHeight: 1.4, maxWidth: 480 }}>{activeQuestion.question.clue}</p>
+        {timer && <div style={{ width: '100%', maxWidth: 400 }}><QuestionTimer remainingMs={timer.remainingMs} totalMs={timer.totalMs} isPaused={timer.isPaused} /></div>}
+        {(activeQuestion.speedRoundCorrect?.length ?? 0) > 0 && (
+          <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {activeQuestion.speedRoundCorrect!.map((entry) => (
+              <div key={entry.playerId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 10, background: entry.playerId === myId ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.04)', border: `1px solid ${entry.playerId === myId ? 'rgba(74,222,128,0.3)' : 'rgba(255,255,255,0.07)'}` }}>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#4ade80', width: 20 }}>#{entry.rank}</span>
+                <span style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, color: '#f0ecff', flex: 1 }}>{entry.playerName}</span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#4ade80', fontSize: 13 }}>+${entry.scoreChange}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {mySpeedEntry ? (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 40 }}>✅</div>
+            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#4ade80', letterSpacing: '0.1em', marginTop: 8 }}>ACERTOU!</p>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', color: '#6b6390', fontSize: 13, marginTop: 4 }}>#{mySpeedEntry.rank} — +${mySpeedEntry.scoreChange} pts</p>
+          </div>
+        ) : (
+          <form onSubmit={submitSpeedAnswer} style={{ display: 'flex', gap: 8, width: '100%', maxWidth: 400 }}>
+            <input
+              type="text"
+              value={speedInput}
+              onChange={(e) => setSpeedInput(e.target.value)}
+              placeholder={t('player.answer_placeholder')}
+              autoFocus
+              style={{ flex: 1, background: '#0d0b18', border: '1px solid rgba(124,58,237,0.4)', borderRadius: 10, padding: '12px 14px', color: '#f0ecff', fontFamily: 'DM Sans, sans-serif', fontSize: 15, outline: 'none' }}
+            />
+            <button type="submit" className="btn-primary" style={{ whiteSpace: 'nowrap' }}>{t('player.send_answer')}</button>
+          </form>
+        )}
+      </div>
+    );
+  }
+
   if (phase === 'double_wager' && activeQuestion) {
     return (
       <div style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, gap: 16, background: '#07060f', overflow: 'auto' }}>

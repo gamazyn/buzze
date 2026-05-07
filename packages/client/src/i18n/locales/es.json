@@ -120,7 +120,8 @@
     "leave": "Salir",
     "type_all_play": "TODOS",
     "type_challenge": "DESAFÍO",
-    "type_double": "DOBLE"
+    "type_double": "DOBLE",
+    "type_speed_round": "RÁPIDA"
   },
   "player": {
     "waiting_host": "Esperando que el host inicie el quiz...",
@@ -187,6 +188,7 @@
     "type_all_play": "Todos Juegan",
     "type_double": "Apuesta Doble",
     "type_challenge": "Desafiar a un Jugador",
+    "type_speed_round": "Ronda Rápida",
     "image_upload": "imagen",
     "audio_upload": "audio",
     "change": "Cambiar",

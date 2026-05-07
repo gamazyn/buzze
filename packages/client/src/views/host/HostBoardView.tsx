@@ -640,6 +640,45 @@ export function HostBoardView() {
 
       {/* ── OVERLAYS ── */}
 
+      {/* Speed round overlay */}
+      <AnimatePresence>
+        {activeQuestion && phase === 'speed_round' && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-buzze-bg/97 backdrop-blur-sm flex items-center justify-center p-8 z-50"
+          >
+            <div className="max-w-2xl w-full text-center flex flex-col items-center gap-6">
+              <div className="font-mono text-xs font-bold tracking-widest text-emerald-400 uppercase">⚡ {t('host_board.type_speed_round')}</div>
+              <div className="font-mono text-buzze-fuchsia text-xl">${activeQuestion.question.value}</div>
+              {activeQuestion.question.media?.type === 'image' && (
+                <img src={`/media/${gameConfig.id}/${activeQuestion.question.media.filename}`} alt="" className="max-h-48 object-contain rounded-xl" />
+              )}
+              <p className="text-3xl font-bold leading-tight">{activeQuestion.question.clue}</p>
+              <p className="text-slate-400 italic text-sm">{activeQuestion.question.answer}</p>
+              {(activeQuestion.speedRoundCorrect?.length ?? 0) > 0 && (
+                <div className="w-full max-w-md flex flex-col gap-2 text-left">
+                  {activeQuestion.speedRoundCorrect!.map((entry) => (
+                    <div key={entry.playerId} className="flex items-center gap-3 px-3 py-1.5 rounded-lg" style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)' }}>
+                      <span className="font-mono text-emerald-400 font-bold w-5">#{entry.rank}</span>
+                      <span className="font-bold flex-1 text-white">{entry.playerName}</span>
+                      <span className="text-emerald-400 font-mono text-sm">+${entry.scoreChange}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {timer && <div className="w-full max-w-md"><QuestionTimer remainingMs={timer.remainingMs} totalMs={timer.totalMs} isPaused={timer.isPaused} /></div>}
+              <div className="flex gap-3">
+                {timer?.isPaused
+                  ? <button className="btn-ghost" onClick={() => timerControl('resume')}>{t('host_board.resume')}</button>
+                  : <button className="btn-ghost" onClick={() => timerControl('pause')}>{t('host_board.pause')}</button>
+                }
+                <button className="btn-ghost" onClick={clearQuestion}>{t('host_board.close')}</button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Double wager overlay */}
       <AnimatePresence>
         {phase === 'double_wager' && activeQuestion && (

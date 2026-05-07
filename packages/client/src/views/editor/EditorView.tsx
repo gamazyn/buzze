@@ -12,7 +12,8 @@ const TYPE_META: Record<Question['type'], { labelKey: string; color: string; bg:
   standard:  { labelKey: 'editor.type_normal',    color: '#6b6390', bg: 'rgba(107,99,144,0.1)'  },
   all_play:  { labelKey: 'editor.type_all_play',  color: '#ffc857', bg: 'rgba(255,200,87,0.1)'  },
   challenge: { labelKey: 'editor.type_challenge', color: '#fb923c', bg: 'rgba(251,146,60,0.1)'  },
-  double:    { labelKey: 'editor.type_double',    color: '#c084fc', bg: 'rgba(192,132,252,0.1)' },
+  double:      { labelKey: 'editor.type_double',      color: '#c084fc', bg: 'rgba(192,132,252,0.1)' },
+  speed_round: { labelKey: 'editor.type_speed_round', color: '#4ade80', bg: 'rgba(74,222,128,0.1)'  },
 };
 
 function emptyQuestion(value: number): Question {

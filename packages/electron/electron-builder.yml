@@ -6,6 +6,7 @@ publish:
   provider: github
   owner: gamazyn
   repo: buzze
+  releaseType: release
 
 artifactName: "buzze-${version}-${arch}.${ext}"
 

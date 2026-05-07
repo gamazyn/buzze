@@ -120,7 +120,8 @@
     "leave": "Sair",
     "type_all_play": "TODOS",
     "type_challenge": "DESAFIO",
-    "type_double": "DUPLA"
+    "type_double": "DUPLA",
+    "type_speed_round": "RÁPIDA"
   },
   "player": {
     "waiting_host": "Aguardando o host iniciar o quiz...",
@@ -187,6 +188,7 @@
     "type_all_play": "Todos Jogam",
     "type_double": "Dupla Aposta",
     "type_challenge": "Desafie um Jogador",
+    "type_speed_round": "Rodada Rápida",
     "image_upload": "imagem",
     "audio_upload": "áudio",
     "change": "Trocar",
