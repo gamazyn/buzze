@@ -1,28 +1,11 @@
 import type { Server, Socket } from 'socket.io';
-import type { ServerToClientEvents, ClientToServerEvents, BuzzerEntry, SpeedRoundCorrect } from '@buzze/shared';
-import { sanitizeAnswer } from '@buzze/shared';
+import type { ServerToClientEvents, ClientToServerEvents, BuzzerEntry } from '@buzze/shared';
 import { getSession, updateSession } from '../managers/sessionManager.js';
-import { validateHostToken } from '../middleware/authMiddleware.js';
 import { socketRateLimit } from '../middleware/rateLimiter.js';
 import { closeQuestion } from './gameHandler.js';
 import { startTimer } from '../managers/timerManager.js';
-
-function requireHost(
-  socket: Socket,
-  sessionId: string,
-  hostToken: string,
-): ReturnType<typeof getSession> | null {
-  const session = getSession(sessionId);
-  if (!session) {
-    socket.emit('error', { code: 'SESSION_NOT_FOUND', message: 'Sessão não encontrada.' });
-    return null;
-  }
-  if (session.hostId !== socket.id || !validateHostToken(session.hostToken, hostToken)) {
-    socket.emit('error', { code: 'NOT_HOST', message: 'Ação não permitida.' });
-    return null;
-  }
-  return session;
-}
+import { applyJudgeResult, applySpeedAnswer, clampDoubleWager } from '../domain/buzzerRules.js';
+import { requireHost } from './requireHost.js';
 
 export function registerBuzzerHandlers(
   io: Server<ClientToServerEvents, ServerToClientEvents>,
@@ -104,118 +87,62 @@ export function registerBuzzerHandlers(
     const player = session.players[payload.playerId];
     if (!player) return;
 
-    const updatedPlayers = { ...session.players };
-
-    let scoreChange: number;
-    let newScore: number;
-
-    if (isChallenge && session.challengeState) {
-      // Scoring simétrico 100%: ambos arriscam o valor cheio da questão
-      const challenger = session.players[session.challengeState.challengerId];
-      const value = activeQuestion.question.value;
-      if (payload.correct) {
-        // Desafiado acerta: +value; desafiador perde value
-        scoreChange = value;
-        updatedPlayers[payload.playerId] = { ...player, score: player.score + value };
-        if (challenger) {
-          updatedPlayers[session.challengeState.challengerId] = {
-            ...challenger,
-            score: challenger.score - value,
-          };
-        }
-      } else {
-        // Desafiado erra: -value; desafiador ganha value
-        scoreChange = -value;
-        updatedPlayers[payload.playerId] = { ...player, score: player.score - value };
-        if (challenger) {
-          updatedPlayers[session.challengeState.challengerId] = {
-            ...challenger,
-            score: challenger.score + value,
-          };
-        }
-      }
-      newScore = updatedPlayers[payload.playerId].score;
-    } else if (activeQuestion.question.type === 'double' && session.doubleWager !== null) {
-      // Scoring de Dupla Aposta: usa o valor apostado
-      scoreChange = payload.correct ? session.doubleWager : -session.doubleWager;
-      newScore = player.score + scoreChange;
-      updatedPlayers[payload.playerId] = { ...player, score: newScore };
-    } else {
-      // Scoring padrão
-      scoreChange = payload.correct ? activeQuestion.question.value : -activeQuestion.question.value;
-      newScore = player.score + scoreChange;
-      updatedPlayers[payload.playerId] = { ...player, score: newScore };
-    }
-
-    // Marcar como respondido na fila (se estiver)
-    const updatedQueue = session.buzzerQueue.map((e) =>
-      e.playerId === payload.playerId ? { ...e, responded: true } : e,
-    );
-
-    const isAllPlay = activeQuestion.question.type === 'all_play';
+    const result = applyJudgeResult(session, {
+      playerId: payload.playerId,
+      correct: payload.correct,
+    });
 
     // all_play com erro: bloquear player e reabrir buzzer
-    if (isAllPlay && !payload.correct && !isChallenge) {
-      const lockedPlayerIds = [...(activeQuestion.lockedPlayerIds ?? []), payload.playerId];
-      const totalPlayers = Object.keys(session.players).length;
-      const allLocked = lockedPlayerIds.length >= totalPlayers;
-      const newPhase = allLocked ? 'answer_reveal' : 'all_play';
-
-      const updatedActiveQuestion = { ...activeQuestion, lockedPlayerIds };
+    if (activeQuestion.question.type === 'all_play' && !payload.correct && !isChallenge) {
       updateSession(payload.sessionId, {
-        phase: newPhase,
-        players: updatedPlayers,
-        buzzerQueue: [],
-        activeQuestion: updatedActiveQuestion,
+        phase: result.phase,
+        players: result.players,
+        buzzerQueue: result.buzzerQueue,
+        activeQuestion: result.activeQuestion,
       });
 
       io.to(`session:${payload.sessionId}`).emit('judge:result', {
         playerId: payload.playerId,
         correct: false,
-        scoreChange,
-        newScore,
+        scoreChange: result.scoreChange,
+        newScore: result.newScore,
         nextInQueue: null,
-        phase: newPhase,
+        phase: result.phase,
       });
       io.to(`session:${payload.sessionId}`).emit('score:update', {
-        players: Object.values(updatedPlayers),
+        players: Object.values(result.players),
       });
 
-      if (allLocked) {
+      if (result.closeQuestion) {
         closeQuestion(io, payload.sessionId, true);
       }
       return;
     }
 
-    const nextInQueue = isChallenge ? null : (updatedQueue.find((e) => !e.responded) ?? null);
-    const newPhase = payload.correct ? 'answer_reveal' : (nextInQueue ? 'buzzer_queue' : 'board');
-
     updateSession(payload.sessionId, {
-      phase: newPhase,
-      players: updatedPlayers,
-      buzzerQueue: updatedQueue,
+      phase: result.phase,
+      players: result.players,
+      buzzerQueue: result.buzzerQueue,
     });
 
     io.to(`session:${payload.sessionId}`).emit('judge:result', {
       playerId: payload.playerId,
       correct: payload.correct,
-      scoreChange,
-      newScore,
-      nextInQueue,
-      phase: newPhase,
+      scoreChange: result.scoreChange,
+      newScore: result.newScore,
+      nextInQueue: result.nextInQueue,
+      phase: result.phase,
     });
 
     io.to(`session:${payload.sessionId}`).emit('score:update', {
-      players: Object.values(updatedPlayers),
+      players: Object.values(result.players),
     });
 
-    if (payload.correct) {
-      closeQuestion(io, payload.sessionId, true);
-    } else if (!nextInQueue) {
+    if (result.closeQuestion) {
       closeQuestion(io, payload.sessionId, true);
     } else {
       io.to(`host:${payload.sessionId}`).emit('buzzer:queueUpdate', {
-        queue: updatedQueue,
+        queue: result.buzzerQueue,
         phase: 'buzzer_queue',
       });
     }
@@ -267,11 +194,11 @@ export function registerBuzzerHandlers(
     const activeQuestion = session.activeQuestion;
     if (!activeQuestion) return;
 
-    // Saldo negativo: pode apostar até o valor da questão (chance de recuperar)
-    // Saldo positivo: pode apostar até o saldo atual
-    // Mínimo sempre 50
-    const maxWager = Math.max(player.score, activeQuestion.question.value);
-    const amount = Math.max(50, Math.min(payload.amount, maxWager));
+    const amount = clampDoubleWager({
+      requestedAmount: payload.amount,
+      playerScore: player.score,
+      questionValue: activeQuestion.question.value,
+    });
 
     // Salva aposta e transita para question (clue revela para todos, timer inicia)
     updateSession(payload.sessionId, {
@@ -314,58 +241,31 @@ export function registerBuzzerHandlers(
     const activeQuestion = session.activeQuestion;
     if (!activeQuestion) return;
 
-    const correct = sanitizeAnswer(payload.answer).toLowerCase() === sanitizeAnswer(activeQuestion.question.answer).toLowerCase();
-    if (!correct) return; // errou: tentativas livres, sem penalidade
-
-    const alreadyCorrect = activeQuestion.speedRoundCorrect ?? [];
-
-    // Player já acertou antes — ignorar
-    if (alreadyCorrect.some((e) => e.playerId === socket.id)) return;
-
-    // Rank: quantos já acertaram + 1
-    const rank = alreadyCorrect.length + 1;
-
-    // Pontuação: 1º=100%, 2º=75%, 3º=50%, demais=0
-    const RANK_MULTIPLIERS: Record<number, number> = { 1: 1, 2: 0.75, 3: 0.5 };
-    const multiplier = RANK_MULTIPLIERS[rank] ?? 0;
-    const scoreChange = Math.round(activeQuestion.question.value * multiplier);
-
-    const entry: SpeedRoundCorrect = {
+    const result = applySpeedAnswer(session, {
       playerId: socket.id,
-      playerName: player.name,
-      scoreChange,
-      rank,
+      answer: payload.answer,
       timestamp: Date.now(),
-    };
-
-    const updatedCorrect = [...alreadyCorrect, entry];
-    const updatedPlayers = { ...session.players };
-    if (scoreChange > 0) {
-      updatedPlayers[socket.id] = { ...player, score: player.score + scoreChange };
-    }
-
-    const updatedActiveQuestion = { ...activeQuestion, speedRoundCorrect: updatedCorrect };
-    const allPlayersScored = updatedCorrect.length >= 3; // rank 3 = encerrar early
-    const newPhase = allPlayersScored ? 'answer_reveal' : 'speed_round';
+    });
+    if (!result.accepted) return;
 
     updateSession(payload.sessionId, {
-      players: updatedPlayers,
-      activeQuestion: updatedActiveQuestion,
-      ...(allPlayersScored ? { phase: 'answer_reveal' } : {}),
+      players: result.players,
+      activeQuestion: result.activeQuestion,
+      ...(result.closeQuestion ? { phase: 'answer_reveal' } : {}),
     });
 
     io.to(`session:${payload.sessionId}`).emit('speed:answered', {
-      correct: updatedCorrect,
-      phase: newPhase,
+      correct: result.activeQuestion.speedRoundCorrect ?? [],
+      phase: result.phase,
     });
 
-    if (scoreChange > 0) {
+    if (result.scoreChange > 0) {
       io.to(`session:${payload.sessionId}`).emit('score:update', {
-        players: Object.values(updatedPlayers),
+        players: Object.values(result.players),
       });
     }
 
-    if (allPlayersScored) {
+    if (result.closeQuestion) {
       closeQuestion(io, payload.sessionId, true);
     }
   });
